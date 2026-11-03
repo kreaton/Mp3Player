@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- UI-free player API: playback, playlist, tags, deletion. No Windows Forms dependency. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Mp3Player.Core</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- NAudio 3.x is still preview; 2.2.1 is the current stable release. -->
+    <PackageReference Include="NAudio" Version="2.2.1" />
+    <PackageReference Include="TagLibSharp" Version="2.3.0" />
+  </ItemGroup>
+
+</Project>
