@@ -1,6 +1,6 @@
 # MP3 Player
 
-A small Windows MP3 player that plays every `.mp3` in a folder and all its subfolders. It comes with two front ends, Windows Forms and WPF, built on one shared player core.
+A small Windows MP3 player that plays every `.mp3` in a folder and all its subfolders. It has a WPF front end built on a separate player core.
 
 ## Features
 
@@ -11,10 +11,10 @@ A small Windows MP3 player that plays every `.mp3` in a folder and all its subfo
 - **Seek and volume**.
 - **Search**: type part of an artist, album or song title to find a track and play it (Ctrl+F or the Search button).
 - **Keyboard shortcuts**: see below.
-- **Track info**: title, artist, album and cover art, read from the ID3 tags. The WPF version takes its accent color from the cover.
+- **Track info**: title, artist, album and cover art, read from the ID3 tags. The window takes its accent color from the cover.
 - **Clean-up while listening**: delete the current track, or the whole folder (usually an album) it lives in. Both ask for confirmation first and send the files to the Recycle Bin. Folder delete is disabled for tracks that sit directly in the opened folder.
-- **About page**: icon, version and credits (the ⓘ button in WPF, "About..." in Windows Forms). The version also shows at the bottom right of the main window.
-- **Remembers your settings**: last folder, volume, shuffle and crossfade are saved to `%AppData%\Mp3Player\settings.json`. Both front ends share this file.
+- **About page**: icon, version and credits (the ⓘ button). The version also shows at the bottom right of the main window.
+- **Remembers your settings**: last folder, volume, shuffle and crossfade are saved to `%AppData%\Mp3Player\settings.json`.
 
 ## Keyboard shortcuts
 
@@ -31,14 +31,13 @@ A small Windows MP3 player that plays every `.mp3` in a folder and all its subfo
 
 In the search window, type to narrow the list. Up and Down select a track, Enter plays it and Esc closes the window. You can also double-click a track. Words can be in any order and accents are ignored, so `tears bonnie` finds "Save Up All Your Tears" by Bonnie Tyler.
 
-Space always means play/pause, even right after you've clicked a button. To press a focused button from the keyboard, use Enter in WPF. In the Windows Forms version, click it with the mouse.
+Space always means play/pause, even right after you've clicked a button. To press a focused button from the keyboard, use Enter.
 
 ## Projects
 
 | Project | Description |
 |---|---|
 | `Mp3Player.Core` | The UI-independent player: audio engine with crossfading (NAudio), playlist and shuffle, tag reading (TagLibSharp), settings. See its [API reference](Mp3Player.Core/README.md). |
-| `Mp3Player.App` | Windows Forms front end (`Mp3Player.exe`). |
 | `Mp3Player.Wpf` | WPF front end with the Fluent theme (`Mp3PlayerWpf.exe`). |
 
 ## Requirements
@@ -56,15 +55,11 @@ dotnet build Mp3Player.slnx
 dotnet run --project Mp3Player.Wpf
 ```
 
-```bash
-dotnet run --project Mp3Player.App
-```
-
-You can also open `Mp3Player.slnx` in a Visual Studio version that supports .NET 10 and set the project you want as the startup project.
+You can also open `Mp3Player.slnx` in a Visual Studio version that supports .NET 10 and set `Mp3Player.Wpf` as the startup project.
 
 ### Starting with a folder
 
-Either executable takes an optional folder path. When it's given, that folder is opened and playback starts right away:
+The app takes an optional folder path. When it's given, that folder is opened and playback starts right away:
 
 ```bash
 dotnet run --project Mp3Player.Wpf -- "D:\Music\Some Album"

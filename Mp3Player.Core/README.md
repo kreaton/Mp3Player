@@ -1,6 +1,6 @@
 # Mp3Player.Core
 
-All of the MP3 player's logic in one class library, with no UI code. Both front ends (`Mp3Player.App`, Windows Forms, and `Mp3Player.Wpf`) are thin layers over it. Use it to build another front end, or to script playback.
+All of the MP3 player's logic in one class library, with no UI code. The WPF front end (`Mp3Player.Wpf`) is a thin layer over it. Use it to build another front end, or to script playback.
 
 It handles:
 
