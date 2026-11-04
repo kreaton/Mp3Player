@@ -35,3 +35,14 @@ internal sealed class RelayCommand : ICommand
 
     public void Execute(object? parameter) => _execute();
 }
+
+/// <summary>Name, version and credits shown on the About card and in the status bar.</summary>
+internal static class AppInfo
+{
+    public const string Name = "MP3 Player";
+
+    /// <summary>"1.1.0", from the &lt;Version&gt; in the project file.</summary>
+    public static string Version { get; } = typeof(AppInfo).Assembly.GetName().Version is { } v
+        ? $"{v.Major}.{v.Minor}.{v.Build}"
+        : "";
+}

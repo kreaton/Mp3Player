@@ -15,6 +15,9 @@ internal sealed class Playlist
     public bool Shuffle { get; private set; }
     public int Count => _all.Count;
 
+    /// <summary>Every track, sorted by folder and name (not in play order).</summary>
+    public IReadOnlyList<string> Tracks => _all;
+
     /// <summary>0-based index of the current track in the play order.</summary>
     public int Position => _pos;
 
@@ -86,6 +89,28 @@ internal sealed class Playlist
         if (_pos > 0) _pos--;
         else if (!Shuffle) _pos = _order.Count - 1;   // wrap around (shuffle: stay on the first track of the round)
         return Current;
+    }
+
+    /// <summary>
+    /// Makes the track current; false if it is not in the list. In shuffle mode it moves to just after the
+    /// current track, so the rest of the round is still played and Previous returns to where you were.
+    /// </summary>
+    public bool MoveTo(string path)
+    {
+        int i = _order.IndexOf(path);
+        if (i < 0) return false;
+
+        if (!Shuffle)
+        {
+            _pos = i;
+        }
+        else if (i != _pos)
+        {
+            _order.RemoveAt(i);
+            if (i < _pos) _pos--;
+            _order.Insert(++_pos, path);
+        }
+        return true;
     }
 
     /// <summary>Number of tracks located in the directory or any of its subdirectories.</summary>

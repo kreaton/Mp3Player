@@ -13,6 +13,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Also embedded, so the About dialog can show the large icon frame. -->
+    <EmbeddedResource Include="app.ico" LogicalName="Mp3Player.app.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Mp3Player.Core\Mp3Player.Core.csproj" />
   </ItemGroup>
 

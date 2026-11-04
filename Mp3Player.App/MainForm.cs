@@ -19,7 +19,9 @@ internal sealed class MainForm : Form
 
     // ---- controls ----
     private readonly Button _btnOpen = new() { Text = "Open folder...", AutoSize = true, Anchor = AnchorStyles.Left };
+    private readonly Button _btnSearch = new() { Text = "Search...", AutoSize = true, Anchor = AnchorStyles.Left };
     private readonly TextBox _txtFolder = new() { ReadOnly = true, Dock = DockStyle.Fill };
+    private readonly Button _btnAbout = new() { Text = "About...", AutoSize = true, Anchor = AnchorStyles.Right };
 
     private readonly Label _lblName = NewValue(), _lblFolder = NewValue(), _lblDetails = NewValue();
     private readonly Label _lblTitle = NewValue(), _lblArtist = NewValue(), _lblAlbum = NewValue(),
@@ -38,13 +40,14 @@ internal sealed class MainForm : Form
 
     private readonly CheckBox _chkShuffle = new() { Text = "Shuffle (random, no repeats)", AutoSize = true, Anchor = AnchorStyles.Left };
     private readonly CheckBox _chkFade = new() { Text = "Crossfade", AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(18, 3, 3, 3) };
-    private readonly NumericUpDown _numFade = new() { Minimum = 1, Maximum = 12, Value = 4, Width = 52, Anchor = AnchorStyles.Left };
+    private readonly NumericUpDown _numFade = new() { Minimum = 1, Maximum = 18, Value = 4, Width = 52, Anchor = AnchorStyles.Left };
 
     private readonly TrackBar _volume = new() { Minimum = 0, Maximum = 100, TickFrequency = 10, LargeChange = 10, SmallChange = 2, Dock = DockStyle.Fill };
     private readonly Label _lblVolume = new() { Text = "80%", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleRight };
 
     private readonly StatusStrip _statusStrip = new();
     private readonly ToolStripStatusLabel _statusLabel = new() { Spring = true, TextAlign = ContentAlignment.MiddleLeft };
+    private readonly ToolStripStatusLabel _versionLabel = new() { Text = "v" + AboutForm.Version, ForeColor = SystemColors.GrayText };
 
     public MainForm(string? startFolder)
     {
@@ -131,11 +134,15 @@ internal sealed class MainForm : Form
         root.RowCount = 7;
 
         // 0: folder picker
-        var top = new TableLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, ColumnCount = 2 };
+        var top = new TableLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, ColumnCount = 4 };
+        top.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         top.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         top.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        top.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         top.Controls.Add(_btnOpen, 0, 0);
-        top.Controls.Add(_txtFolder, 1, 0);
+        top.Controls.Add(_btnSearch, 1, 0);
+        top.Controls.Add(_txtFolder, 2, 0);
+        top.Controls.Add(_btnAbout, 3, 0);
         root.Controls.Add(top, 0, 0);
 
         // 1: file info
@@ -211,6 +218,7 @@ internal sealed class MainForm : Form
         root.Controls.Add(volRow, 0, 6);
 
         _statusStrip.Items.Add(_statusLabel);
+        _statusStrip.Items.Add(_versionLabel);
 
         Controls.Add(root);
         Controls.Add(_statusStrip);   // added after 'root' so it docks to the bottom first
@@ -219,7 +227,12 @@ internal sealed class MainForm : Form
         _tip.SetToolTip(_btnDeleteFolder,
             "Ask for confirmation, then delete the whole folder of this track (usually an album) and play the next track.\n" +
             "Disabled for tracks that are directly in the opened folder.");
-        _tip.SetToolTip(_chkShuffle, "Play every track once in random order before any track repeats");
+        _tip.SetToolTip(_chkShuffle, "Play every track once in random order before any track repeats (S)");
+        _tip.SetToolTip(_btnSearch, "Find and play a track by artist, album or title (Ctrl+F)");
+        _tip.SetToolTip(_btnPlay, "Play (Space)");
+        _tip.SetToolTip(_btnPause, "Pause (Space)");
+        _tip.SetToolTip(_btnNext, "Next (Ctrl+Right)");
+        _tip.SetToolTip(_btnPrev, "Previous (Ctrl+Left; restarts the track after 3 seconds)");
         _tip.SetToolTip(_chkFade, "Fade the end of a track into the start of the next");
     }
 
@@ -267,6 +280,12 @@ internal sealed class MainForm : Form
         _btnPrev.Click += (_, _) => _player.Previous();
         _btnDeleteTrack.Click += (_, _) => OnDeleteTrack();
         _btnDeleteFolder.Click += (_, _) => OnDeleteFolder();
+        _btnSearch.Click += (_, _) => ShowSearch();
+        _btnAbout.Click += (_, _) =>
+        {
+            using var about = new AboutForm();
+            about.ShowDialog(this);
+        };
 
         _chkShuffle.CheckedChanged += (_, _) => ApplyShuffle();
         _chkFade.CheckedChanged += (_, _) =>
@@ -297,6 +316,62 @@ internal sealed class MainForm : Form
             if (!string.IsNullOrEmpty(dir) && Directory.Exists(dir))
                 await LoadFolderAsync(dir, play: _startFolder != null);
         };
+    }
+
+    /// <summary>
+    /// The player's shortcuts. They are handled here, before the focused control sees them, so Space always means
+    /// play/pause (not "click the button you just used") and the arrows work wherever the focus is.
+    /// </summary>
+    protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+    {
+        const int SeekStep = 5, VolumeStep = 5;
+        bool isRepeat = (msg.LParam.ToInt64() & 0x40000000) != 0;
+        bool arrow = (keyData & Keys.KeyCode) is Keys.Left or Keys.Right or Keys.Up or Keys.Down;
+
+        // The crossfade box needs its own arrow keys.
+        if (arrow && ActiveControl is NumericUpDown) return base.ProcessCmdKey(ref msg, keyData);
+
+        switch (keyData)
+        {
+            case Keys.Space or Keys.MediaPlayPause:
+                if (isRepeat) break;
+                if (_player.State == PlayerState.Playing) _player.Pause();
+                else _player.Play();
+                break;
+            case (Keys.Control | Keys.Right) or Keys.MediaNextTrack:
+                if (!isRepeat) _player.Next();
+                break;
+            case (Keys.Control | Keys.Left) or Keys.MediaPreviousTrack:
+                if (!isRepeat) _player.Previous();
+                break;
+            case Keys.Right:
+                _player.Seek(_player.Position + TimeSpan.FromSeconds(SeekStep));
+                break;
+            case Keys.Left:
+                _player.Seek(_player.Position - TimeSpan.FromSeconds(SeekStep));
+                break;
+            case Keys.Up:
+                _volume.Value = Math.Min(_volume.Maximum, _volume.Value + VolumeStep);
+                break;
+            case Keys.Down:
+                _volume.Value = Math.Max(_volume.Minimum, _volume.Value - VolumeStep);
+                break;
+            case Keys.S:
+                if (!isRepeat) _chkShuffle.Checked = !_chkShuffle.Checked;
+                break;
+            case Keys.Control | Keys.F:
+                if (!isRepeat) ShowSearch();
+                break;
+            default:
+                return base.ProcessCmdKey(ref msg, keyData);
+        }
+        return true;
+    }
+
+    private void ShowSearch()
+    {
+        using var search = new SearchForm(_player);
+        search.ShowDialog(this);
     }
 
     protected override void OnFormClosing(FormClosingEventArgs e)

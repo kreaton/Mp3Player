@@ -212,11 +212,11 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Thumb">
-                        <Ellipse x:Name="E" Fill="White">
-                            <Ellipse.Effect>
+                        <Rectangle x:Name="E" Fill="White">
+                            <Rectangle.Effect>
                                 <DropShadowEffect BlurRadius="8" ShadowDepth="1" Opacity="0.55"/>
-                            </Ellipse.Effect>
-                        </Ellipse>
+                            </Rectangle.Effect>
+                        </Rectangle>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsDragging" Value="True">
                                 <Setter TargetName="E" Property="Fill" Value="#FFE6E6F0"/>
@@ -336,15 +336,25 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <Button Grid.Column="0" Style="{StaticResource AccentPill}" Command="{Binding OpenFolderCommand}"
-                        ToolTip="Choose the folder to play (its subfolders are included)">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE838;" FontSize="15" Margin="0,1,9,0"/>
-                        <TextBlock Text="Open folder"/>
-                    </StackPanel>
-                </Button>
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <Button Style="{StaticResource AccentPill}" Command="{Binding OpenFolderCommand}"
+                            ToolTip="Choose the folder to play (its subfolders are included)">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE838;" FontSize="15" Margin="0,1,9,0"/>
+                            <TextBlock Text="Open folder"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource PillButton}" Margin="10,0,0,0" Click="SearchButton_Click"
+                            ToolTip="Find and play a track by artist, album or title (Ctrl+F)">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE721;" FontSize="15" Margin="0,1,9,0"/>
+                            <TextBlock Text="Search"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
 
                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="18,0">
                     <TextBlock Text="{Binding FolderText}" Foreground="{StaticResource TextSecondary}" FontSize="13"
@@ -368,6 +378,10 @@
                         <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE74D;" FontSize="14" Margin="0,1,8,0"/>
                         <TextBlock Text="Delete folder"/>
                     </StackPanel>
+                </Button>
+                <Button Grid.Column="4" Style="{StaticResource PillButton}" Margin="10,0,0,0" Padding="12,9"
+                        Click="AboutButton_Click" ToolTip="About MP3 Player">
+                    <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE946;" FontSize="15" Margin="0,1,0,0"/>
                 </Button>
             </Grid>
 
@@ -516,7 +530,7 @@
 
                         <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                             <ToggleButton Style="{StaticResource ChipToggle}" IsChecked="{Binding Shuffle, Mode=TwoWay}"
-                                          ToolTip="Play every track once in random order before any track repeats">
+                                          ToolTip="Play every track once in random order before any track repeats (S)">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE8B1;" Margin="0,1,8,0"/>
                                     <TextBlock Text="Shuffle"/>
@@ -527,8 +541,8 @@
                                           ToolTip="Fade the end of a track into the start of the next">
                                 <TextBlock Text="Crossfade"/>
                             </ToggleButton>
-                            <Slider Style="{StaticResource FancySlider}" Width="84" Margin="12,0,0,0"
-                                    Minimum="1" Maximum="12" TickFrequency="1" IsSnapToTickEnabled="True"
+                            <Slider Style="{StaticResource FancySlider}" Width="108" Margin="12,0,0,0"
+                                    Minimum="1" Maximum="18" TickFrequency="1" IsSnapToTickEnabled="True"
                                     Value="{Binding CrossfadeSeconds, Mode=TwoWay}"
                                     IsEnabled="{Binding CrossfadeEnabled}"/>
                             <TextBlock Text="{Binding CrossfadeSeconds, StringFormat={}{0:0} s}" Width="30" Margin="8,0,0,0"
@@ -537,7 +551,7 @@
 
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                             <Button Style="{StaticResource CircleButton}" Content="&#xE892;" Command="{Binding PreviousCommand}"
-                                    ToolTip="Previous (restarts the track after 3 seconds)"/>
+                                    ToolTip="Previous (Ctrl+Left; restarts the track after 3 seconds)"/>
                             <Grid Margin="14,0">
                                 <Ellipse Width="70" Height="70" Fill="{DynamicResource AccentBrush}" Opacity="0.6" IsHitTestVisible="False">
                                     <Ellipse.Effect>
@@ -548,7 +562,7 @@
                                         Command="{Binding PlayPauseCommand}" ToolTip="{Binding PlayPauseTip}"/>
                             </Grid>
                             <Button Style="{StaticResource CircleButton}" Content="&#xE893;" Command="{Binding NextCommand}"
-                                    ToolTip="Next"/>
+                                    ToolTip="Next (Ctrl+Right)"/>
                         </StackPanel>
 
                         <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
@@ -563,9 +577,17 @@
                 </Grid>
             </Border>
 
-            <!-- status -->
-            <TextBlock Grid.Row="3" Text="{Binding StatusText}" FontSize="12" Margin="6,12,0,0"
-                       Foreground="{StaticResource TextTertiary}" TextTrimming="CharacterEllipsis"/>
+            <!-- status | version -->
+            <Grid Grid.Row="3" Margin="6,12,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding StatusText}" FontSize="12"
+                           Foreground="{StaticResource TextTertiary}" TextTrimming="CharacterEllipsis"/>
+                <TextBlock x:Name="VersionText" Grid.Column="1" FontSize="12" Margin="16,0,0,0"
+                           Foreground="{StaticResource TextTertiary}"/>
+            </Grid>
         </Grid>
 
         <!-- ============================ confirmation card (modal overlay) ============================ -->
@@ -589,6 +611,95 @@
                         <Button x:Name="ConfirmButton" Style="{StaticResource DangerPill}" Content="Delete"
                                 MinWidth="124" Margin="10,0,0,0" Click="ConfirmButton_Click"/>
                     </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- ============================ search card (overlay; click outside or Esc closes it) ============================ -->
+        <Grid x:Name="SearchOverlay" Background="#B2000000" Visibility="Collapsed"
+              MouseLeftButtonDown="SearchOverlay_MouseLeftButtonDown">
+            <Border Width="640" CornerRadius="18" Background="#FF22222E" BorderBrush="#40FFFFFF" BorderThickness="1"
+                    Padding="26,24,26,22" HorizontalAlignment="Center" VerticalAlignment="Center"
+                    MouseLeftButtonDown="Card_MouseLeftButtonDown">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="50" ShadowDepth="14" Direction="270" Opacity="0.7"/>
+                </Border.Effect>
+                <StackPanel>
+                    <TextBlock Text="Find a track" FontSize="21" FontWeight="SemiBold"/>
+                    <TextBox x:Name="SearchBox" Margin="0,14,0,0" FontSize="15" TextChanged="SearchBox_TextChanged"
+                             ToolTip="Type any part of the artist, album or song title"/>
+                    <TextBlock x:Name="SearchHint" Margin="2,8,0,8" FontSize="12" Foreground="{StaticResource TextTertiary}"/>
+                    <ListBox x:Name="SearchList" Height="340" Background="Transparent" BorderThickness="0"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             VirtualizingPanel.IsVirtualizing="True" MouseDoubleClick="SearchList_MouseDoubleClick">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Margin="2,3">
+                                    <TextBlock Text="{Binding DisplayTitle}" FontSize="14" TextTrimming="CharacterEllipsis"
+                                               Foreground="{StaticResource TextPrimary}"/>
+                                    <TextBlock Text="{Binding DisplaySubtitle}" FontSize="12" TextTrimming="CharacterEllipsis"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <Grid Margin="0,14,0,0">
+                        <TextBlock Text="↑ ↓ select   •   Enter play   •   Esc close" FontSize="12" VerticalAlignment="Center"
+                                   Foreground="{StaticResource TextTertiary}"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Style="{StaticResource PillButton}" Content="Close" MinWidth="96" Click="SearchClose_Click"/>
+                            <Button Style="{StaticResource AccentPill}" Content="Play" MinWidth="96" Margin="10,0,0,0" Click="SearchPlay_Click"/>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- ============================ about card (overlay; click outside or Esc closes it) ============================ -->
+        <Grid x:Name="AboutOverlay" Background="#B2000000" Visibility="Collapsed"
+              MouseLeftButtonDown="AboutOverlay_MouseLeftButtonDown">
+            <Border Width="460" CornerRadius="18" Background="#FF22222E" BorderBrush="#40FFFFFF" BorderThickness="1"
+                    Padding="30,30,30,24" HorizontalAlignment="Center" VerticalAlignment="Center"
+                    MouseLeftButtonDown="Card_MouseLeftButtonDown">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="50" ShadowDepth="14" Direction="270" Opacity="0.7"/>
+                </Border.Effect>
+                <StackPanel>
+                    <Image x:Name="AboutIcon" Width="88" Height="88" HorizontalAlignment="Center"
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                    <TextBlock x:Name="AboutName" Margin="0,16,0,0" FontSize="24" FontWeight="SemiBold"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="AboutVersion" Margin="0,4,0,0" FontSize="13" HorizontalAlignment="Center"
+                               Foreground="{DynamicResource AccentBrush}"/>
+                    <TextBlock Margin="0,14,0,0" FontSize="13.5" TextWrapping="Wrap" TextAlignment="Center"
+                               Foreground="{StaticResource TextSecondary}"
+                               Text="Plays every MP3 in a folder and its subfolders, with shuffle, crossfade and quick clean-up of tracks and albums."/>
+
+                    <Border Margin="0,20,0,0" Padding="16,12" CornerRadius="10" Background="#22FFFFFF">
+                        <StackPanel>
+                            <TextBlock Text="CREDITS" Style="{StaticResource SectionHeader}" Margin="0,0,0,8"/>
+                            <TextBlock FontSize="12.5" TextWrapping="Wrap" LineHeight="21">
+                                <Run Text="Made by Per Hejndorf, with Claude (Anthropic)"/>
+                                <LineBreak/>
+                                <Run Text="Audio:" Foreground="{StaticResource TextSecondary}"/>
+                                <Hyperlink NavigateUri="https://github.com/naudio/NAudio" RequestNavigate="Link_RequestNavigate"
+                                           Foreground="{StaticResource TextPrimary}">NAudio</Hyperlink>
+                                <Run Text="by Mark Heath (MIT)" Foreground="{StaticResource TextSecondary}"/>
+                                <LineBreak/>
+                                <Run Text="Tags:" Foreground="{StaticResource TextSecondary}"/>
+                                <Hyperlink NavigateUri="https://github.com/mono/taglib-sharp" RequestNavigate="Link_RequestNavigate"
+                                           Foreground="{StaticResource TextPrimary}">TagLibSharp</Hyperlink>
+                                <Run Text="(LGPL-2.1)" Foreground="{StaticResource TextSecondary}"/>
+                                <LineBreak/>
+                                <Run Text="Icons: Segoe Fluent Icons by Microsoft" Foreground="{StaticResource TextSecondary}"/>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Margin="0,18,0,0" FontSize="12" HorizontalAlignment="Center"
+                               Foreground="{StaticResource TextTertiary}" Text="© 2026 Per Hejndorf"/>
+                    <Button x:Name="AboutCloseButton" Style="{StaticResource AccentPill}" Content="Close"
+                            MinWidth="110" Margin="0,18,0,0" HorizontalAlignment="Center" Click="AboutClose_Click"/>
                 </StackPanel>
             </Border>
         </Grid>

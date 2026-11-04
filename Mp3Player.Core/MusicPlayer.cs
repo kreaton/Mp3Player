@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+
 namespace Mp3Player.Core;
 
 public enum PlayerState { Stopped, Playing, Paused }
@@ -35,6 +37,11 @@ public sealed class MusicPlayer : IDisposable
     private bool _advanceWhenResumed;   // the track ended while paused
     private bool _disposed;
 
+    private ConcurrentDictionary<string, TrackSummary> _searchIndex = new();
+    private CancellationTokenSource? _indexCancel;
+    private bool _searchIndexReady = true;
+    private readonly object _fileLock = new();   // the indexer must not hold a file open while it is being deleted
+
     public MusicPlayer()
     {
         _context = SynchronizationContext.Current ?? new SynchronizationContext();
@@ -55,6 +62,9 @@ public sealed class MusicPlayer : IDisposable
     /// Always raised after the <see cref="TrackChanged"/> and <see cref="StateChanged"/> of the same operation.
     /// </summary>
     public event EventHandler<string>? Notice;
+
+    /// <summary>All tags of the opened folder have been read: run a search again to get complete results.</summary>
+    public event EventHandler? SearchIndexReady;
 
     // ------------------------------------------------------------------ state
 
@@ -113,7 +123,6 @@ public sealed class MusicPlayer : IDisposable
         double v = _volume / 100.0;
         _engine.SetVolume(v * v);
     }
-
     // ------------------------------------------------------------------ loading and transport
 
     /// <summary>
@@ -124,7 +133,12 @@ public sealed class MusicPlayer : IDisposable
     {
         ThrowIfDisposed();
         string root = Path.TrimEndingDirectorySeparator(Path.GetFullPath(folder));
-        List<string> files = await Task.Run(() => Playlist.Scan(root));
+        var (files, index) = await Task.Run(() =>
+        {
+            List<string> found = Playlist.Scan(root);
+            return (found, new ConcurrentDictionary<string, TrackSummary>(
+                found.Select(f => KeyValuePair.Create(f, TrackSummary.FromFileName(f)))));
+        });
         ThrowIfDisposed();
 
         _engine.Stop();
@@ -132,6 +146,7 @@ public sealed class MusicPlayer : IDisposable
         _state = PlayerState.Stopped;
         _libraryRoot = root;
         _playlist.SetTracks(files);
+        StartSearchIndex(files, index);
         RefreshInfo();
 
         if (play && _playlist.Current is { } first)
@@ -188,6 +203,63 @@ public sealed class MusicPlayer : IDisposable
         if (_state != PlayerState.Stopped) _engine.Seek(position);
     }
 
+    // ------------------------------------------------------------------ searching
+
+    /// <summary>False while the tags of the opened folder are still being read in the background.</summary>
+    public bool IsSearchIndexReady => _searchIndexReady;
+
+    /// <summary>
+    /// Finds tracks whose title, artist, album or file name contain every word of the query, ignoring case and
+    /// accents. Best matches come first; an empty query returns the tracks in library order. Until
+    /// <see cref="IsSearchIndexReady"/> is true, tracks not read yet match on their file name only.
+    /// </summary>
+    public IReadOnlyList<TrackSummary> SearchTracks(string query, int maxResults = 100)
+    {
+        ThrowIfDisposed();
+        string[] words = TrackSummary.SplitQuery(query);
+        IEnumerable<TrackSummary> tracks = _playlist.Tracks.Select(p => _searchIndex[p]);
+        if (words.Length > 0)
+            tracks = tracks.Where(t => t.Matches(words)).OrderBy(t => t.Rank(words));
+        return tracks.Take(Math.Max(0, maxResults)).ToList();
+    }
+
+    /// <summary>
+    /// Plays a track from the playlist right away. Returns false if it is not in the playlist. In shuffle mode the
+    /// rest of the round is kept, so the other tracks still play once each.
+    /// </summary>
+    public bool PlayTrack(string path)
+    {
+        ThrowIfDisposed();
+        if (!_playlist.MoveTo(path)) return false;
+        StartTrack(path, automatic: false);
+        return true;
+    }
+
+    private void StartSearchIndex(List<string> files, ConcurrentDictionary<string, TrackSummary> index)
+    {
+        _indexCancel?.Cancel();
+        var cancel = new CancellationTokenSource();
+        _indexCancel = cancel;
+        _searchIndex = index;
+        _searchIndexReady = false;
+
+        CancellationToken token = cancel.Token;
+        _ = Task.Run(() =>
+        {
+            foreach (string file in files)
+            {
+                if (token.IsCancellationRequested) return;
+                lock (_fileLock) { index[file] = TrackSummary.Read(file); }
+            }
+            _context.Post(_ =>
+            {
+                if (token.IsCancellationRequested || _disposed) return;
+                _searchIndexReady = true;
+                SearchIndexReady?.Invoke(this, EventArgs.Empty);
+            }, null);
+        }, token);
+    }
+
     // ------------------------------------------------------------------ deleting
 
     /// <summary>
@@ -202,7 +274,7 @@ public sealed class MusicPlayer : IDisposable
         ReleaseFiles();                       // Windows will not delete a file that is still open
         try
         {
-            DeleteFile(path, useRecycleBin);
+            lock (_fileLock) { DeleteFile(path, useRecycleBin); }
         }
         catch
         {
@@ -269,7 +341,7 @@ public sealed class MusicPlayer : IDisposable
         ReleaseFiles();
         try
         {
-            DeleteDirectory(dir, useRecycleBin);
+            lock (_fileLock) { DeleteDirectory(dir, useRecycleBin); }
         }
         catch
         {
@@ -413,6 +485,7 @@ public sealed class MusicPlayer : IDisposable
     {
         if (_disposed) return;
         _disposed = true;
+        _indexCancel?.Cancel();
         _engine.Dispose();
     }
 }

@@ -25,7 +25,7 @@ public sealed class Settings
             {
                 var s = JsonSerializer.Deserialize<Settings>(File.ReadAllText(FilePath)) ?? new Settings();
                 s.Volume = Math.Clamp(s.Volume, 0, 100);
-                s.CrossfadeSeconds = Math.Clamp(s.CrossfadeSeconds, 1, 12);
+                s.CrossfadeSeconds = Math.Clamp(s.CrossfadeSeconds, 1, 18);
                 return s;
             }
         }

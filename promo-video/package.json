@@ -1,0 +1,22 @@
+{
+  "name": "mp3player-promo",
+  "private": true,
+  "scripts": {
+    "studio": "remotion studio",
+    "render": "npm run render:landscape && npm run render:short",
+    "render:landscape": "remotion render Promo out/mp3player-promo-4k.mp4 --scale=2",
+    "render:short": "remotion render PromoShort out/mp3player-short-4k.mp4 --scale=2"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.540",
+    "@remotion/google-fonts": "4.0.540",
+    "@remotion/media-utils": "4.0.540",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "remotion": "4.0.540"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.2",
+    "typescript": "5.9.3"
+  }
+}

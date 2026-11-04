@@ -1,16 +1,21 @@
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
 using System.Windows.Threading;
 using Microsoft.Win32;
+using Mp3Player.Core;
 
 namespace Mp3Player.Wpf;
 
 /// <summary>
-/// View code only: window plumbing, the in-window confirmation card, and the accent/animation effects.
+/// View code only: window plumbing, the in-window cards (confirmation, about, search), keyboard shortcuts, and the accent/animation effects.
 /// All player logic lives in <see cref="PlayerViewModel"/> and Mp3Player.Core.
 /// </summary>
 internal partial class MainWindow : Window, IDialogService
@@ -32,8 +37,20 @@ internal partial class MainWindow : Window, IDialogService
         SeekSlider.AddHandler(PreviewMouseLeftButtonUpEvent, new MouseButtonEventHandler(SeekSlider_MouseUp), true);
         SeekSlider.ValueChanged += SeekSlider_ValueChanged;
 
+        VersionText.Text = "v" + AppInfo.Version;
+        AboutName.Text = AppInfo.Name;
+        AboutVersion.Text = "Version " + AppInfo.Version;
+
         PreviewKeyDown += OnPreviewKeyDown;
-        Loaded += async (_, _) => await _vm.InitializeAsync();
+        _vm.SearchIndexReady += (_, _) =>
+        {
+            if (SearchOverlay.Visibility == Visibility.Visible) RunSearch();
+        };
+        Loaded += async (_, _) =>
+        {
+            Focus();      // so the keyboard shortcuts work right away
+            await _vm.InitializeAsync();
+        };
         Closing += OnClosing;
     }
 
@@ -119,6 +136,7 @@ internal partial class MainWindow : Window, IDialogService
     {
         Overlay.Visibility = Visibility.Collapsed;
         MainLayer.IsEnabled = true;
+        Focus();
         var pending = _confirmation;
         _confirmation = null;
         pending?.TrySetResult(result);
@@ -144,14 +162,215 @@ internal partial class MainWindow : Window, IDialogService
         return dialog.ShowDialog(this) == true ? dialog.FolderName : null;
     }
 
+    // ------------------------------------------------------------------ about card
+
+    private void AboutButton_Click(object sender, RoutedEventArgs e)
+    {
+        AboutIcon.Source ??= LoadLargestIconFrame();
+        MainLayer.IsEnabled = false;
+        AboutOverlay.Visibility = Visibility.Visible;
+        FadeIn(AboutOverlay, 1.0, 160);
+        Dispatcher.BeginInvoke(new Action(() => AboutCloseButton.Focus()), DispatcherPriority.Input);
+    }
+
+    private void CloseAbout()
+    {
+        AboutOverlay.Visibility = Visibility.Collapsed;
+        MainLayer.IsEnabled = true;
+        Focus();
+    }
+
+    private void AboutClose_Click(object sender, RoutedEventArgs e) => CloseAbout();
+
+    private void AboutOverlay_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) => CloseAbout();
+
+    // Clicks on the card itself must not reach the overlay behind it.
+    private void Card_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) => e.Handled = true;
+
+    private void Link_RequestNavigate(object sender, RequestNavigateEventArgs e)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true });
+        }
+        catch
+        {
+            // No browser available: nothing useful to do.
+        }
+        e.Handled = true;
+    }
+
+    /// <summary>The 256 px frame of app.ico; a plain Image would pick the first (16 px) frame and blur it.</summary>
+    private static ImageSource? LoadLargestIconFrame()
+    {
+        try
+        {
+            var decoder = BitmapDecoder.Create(new Uri("pack://application:,,,/app.ico"),
+                BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+            return decoder.Frames.MaxBy(f => f.PixelWidth);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    // ------------------------------------------------------------------ search card
+
+    private const int MaxSearchResults = 100;
+
+    private void SearchButton_Click(object sender, RoutedEventArgs e) => OpenSearch();
+
+    private void OpenSearch()
+    {
+        SearchBox.Text = "";
+        RunSearch();
+        MainLayer.IsEnabled = false;
+        SearchOverlay.Visibility = Visibility.Visible;
+        FadeIn(SearchOverlay, 1.0, 160);
+        Dispatcher.BeginInvoke(new Action(() => SearchBox.Focus()), DispatcherPriority.Input);
+    }
+
+    private void CloseSearch()
+    {
+        SearchOverlay.Visibility = Visibility.Collapsed;
+        MainLayer.IsEnabled = true;
+        Focus();
+    }
+
+    private void SearchBox_TextChanged(object sender, TextChangedEventArgs e) => RunSearch();
+
+    private void RunSearch()
+    {
+        string? selected = (SearchList.SelectedItem as TrackSummary)?.FilePath;
+        var results = _vm.SearchTracks(SearchBox.Text, MaxSearchResults);
+
+        SearchList.ItemsSource = results;
+        SearchList.SelectedItem = results.FirstOrDefault(t => t.FilePath == selected) ?? results.FirstOrDefault();
+        if (SearchList.SelectedItem != null) SearchList.ScrollIntoView(SearchList.SelectedItem);
+
+        string count = !_vm.HasTracks ? "No tracks loaded"
+            : results.Count == 0 ? "No matches"
+            : results.Count == MaxSearchResults ? $"First {MaxSearchResults} tracks - type more to narrow it down"
+            : results.Count == 1 ? "1 track"
+            : $"{results.Count} tracks";
+        SearchHint.Text = _vm.IsSearchIndexReady ? count : count + " (still reading tags, some may be missing)";
+    }
+
+    private void MoveSearchSelection(int delta)
+    {
+        if (SearchList.Items.Count == 0) return;
+        SearchList.SelectedIndex = Math.Clamp(SearchList.SelectedIndex + delta, 0, SearchList.Items.Count - 1);
+        SearchList.ScrollIntoView(SearchList.SelectedItem);
+    }
+
+    private void PlaySearchSelection()
+    {
+        if (SearchList.SelectedItem is not TrackSummary track) return;
+        CloseSearch();
+        _vm.PlayTrack(track.FilePath);
+    }
+
+    private void SearchPlay_Click(object sender, RoutedEventArgs e) => PlaySearchSelection();
+
+    private void SearchClose_Click(object sender, RoutedEventArgs e) => CloseSearch();
+
+    private void SearchOverlay_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) => CloseSearch();
+
+    // Double-clicking a row plays it; the scrollbar and empty space must not.
+    private void SearchList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        if (ItemsControl.ContainerFromElement(SearchList, (DependencyObject)e.OriginalSource) is ListBoxItem)
+            PlaySearchSelection();
+    }
+
+    /// <summary>These keys drive the list from anywhere in the card; anything else is typed into the search box.</summary>
+    private void HandleSearchKey(KeyEventArgs e)
+    {
+        if (e.Key != Key.Tab && SearchList.IsKeyboardFocusWithin) SearchBox.Focus();     // a row was clicked
+
+        switch (e.Key)
+        {
+            case Key.Escape: CloseSearch(); break;
+            case Key.Enter: PlaySearchSelection(); break;
+            case Key.Down: MoveSearchSelection(1); break;
+            case Key.Up: MoveSearchSelection(-1); break;
+            case Key.PageDown: MoveSearchSelection(8); break;
+            case Key.PageUp: MoveSearchSelection(-8); break;
+            default: return;
+        }
+        e.Handled = true;
+    }
+
     // ------------------------------------------------------------------ window events
 
     private void OnPreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (_confirmation != null && e.Key == Key.Escape)
+        if (_confirmation != null || AboutOverlay.Visibility == Visibility.Visible)
         {
-            CloseConfirmation(false);
+            if (e.Key != Key.Escape) return;      // no shortcuts underneath a card
+            if (_confirmation != null) CloseConfirmation(false);
+            else CloseAbout();
             e.Handled = true;
+        }
+        else if (SearchOverlay.Visibility == Visibility.Visible)
+        {
+            HandleSearchKey(e);
+        }
+        else
+        {
+            HandleShortcut(e);
+        }
+    }
+
+    /// <summary>
+    /// The player's shortcuts. They are handled here, before the focused control sees them, so Space always means
+    /// play/pause (not "click the button you just used") and the arrows work wherever the focus is.
+    /// </summary>
+    private void HandleShortcut(KeyEventArgs e)
+    {
+        const double SeekStep = 5, VolumeStep = 5;
+
+        switch (e.Key, Keyboard.Modifiers)
+        {
+            case (Key.Space, ModifierKeys.None) when !e.IsRepeat:
+            case (Key.MediaPlayPause, ModifierKeys.None) when !e.IsRepeat:
+                Run(_vm.PlayPauseCommand);
+                break;
+            case (Key.Right, ModifierKeys.Control) when !e.IsRepeat:
+            case (Key.MediaNextTrack, ModifierKeys.None) when !e.IsRepeat:
+                Run(_vm.NextCommand);
+                break;
+            case (Key.Left, ModifierKeys.Control) when !e.IsRepeat:
+            case (Key.MediaPreviousTrack, ModifierKeys.None) when !e.IsRepeat:
+                Run(_vm.PreviousCommand);
+                break;
+            case (Key.Right, ModifierKeys.None):
+                _vm.SeekBy(SeekStep);
+                break;
+            case (Key.Left, ModifierKeys.None):
+                _vm.SeekBy(-SeekStep);
+                break;
+            case (Key.Up, ModifierKeys.None):
+                _vm.Volume = Math.Min(100, _vm.Volume + VolumeStep);
+                break;
+            case (Key.Down, ModifierKeys.None):
+                _vm.Volume = Math.Max(0, _vm.Volume - VolumeStep);
+                break;
+            case (Key.S, ModifierKeys.None) when !e.IsRepeat:
+                _vm.Shuffle = !_vm.Shuffle;
+                break;
+            case (Key.F, ModifierKeys.Control) when !e.IsRepeat:
+                OpenSearch();
+                break;
+            default:
+                return;
+        }
+        e.Handled = true;
+
+        static void Run(ICommand command)
+        {
+            if (command.CanExecute(null)) command.Execute(null);
         }
     }
 

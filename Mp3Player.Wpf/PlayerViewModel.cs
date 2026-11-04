@@ -229,7 +229,7 @@ internal sealed class PlayerViewModel : INotifyPropertyChanged, IDisposable
         CanDeleteFolder = has && _player.CanDeleteCurrentDirectory;
         IsSeekable = state != PlayerState.Stopped;
         PlayPauseGlyph = IsPlaying ? PauseGlyph : PlayGlyph;
-        PlayPauseTip = IsPlaying ? "Pause" : "Play";
+        PlayPauseTip = IsPlaying ? "Pause (Space)" : "Play (Space)";
 
         TrackText = has ? $"Track {_player.TrackNumber} of {_player.TrackCount}" : "No tracks";
         string mode = _player.Shuffle ? "shuffle" : "in order";
@@ -288,6 +288,14 @@ internal sealed class PlayerViewModel : INotifyPropertyChanged, IDisposable
 
     public void SeekTo(double seconds) => _player.Seek(TimeSpan.FromSeconds(seconds));
 
+    /// <summary>Keyboard seek: jumps relative to the current position.</summary>
+    public void SeekBy(double seconds)
+    {
+        if (IsSeeking || !IsSeekable) return;
+        _player.Seek(_player.Position + TimeSpan.FromSeconds(seconds));
+        UpdatePosition(_player.Position, _player.Duration);
+    }
+
     // ------------------------------------------------------------------ options
 
     private bool _shuffle, _crossfadeEnabled;
@@ -318,6 +326,21 @@ internal sealed class PlayerViewModel : INotifyPropertyChanged, IDisposable
     }
 
     private void ApplyCrossfade() => _player.CrossfadeSeconds = _crossfadeEnabled ? _crossfadeSeconds : 0;
+
+    // ------------------------------------------------------------------ search
+
+    /// <summary>All tags have been read: a search that is on screen should be run again.</summary>
+    public event EventHandler? SearchIndexReady
+    {
+        add => _player.SearchIndexReady += value;
+        remove => _player.SearchIndexReady -= value;
+    }
+
+    public bool IsSearchIndexReady => _player.IsSearchIndexReady;
+
+    public IReadOnlyList<TrackSummary> SearchTracks(string query, int maxResults) => _player.SearchTracks(query, maxResults);
+
+    public void PlayTrack(string path) => _player.PlayTrack(path);
 
     // ------------------------------------------------------------------ actions
 
