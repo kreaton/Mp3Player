@@ -69,3 +69,7 @@ dotnet run --project Mp3Player.Wpf -- "D:\Music\Some Album"
 
 - [NAudio](https://github.com/naudio/NAudio) 2.2.1: audio decoding and playback
 - [TagLibSharp](https://github.com/mono/taglib-sharp) 2.3.0: ID3 tags and cover art
+
+## Releases
+
+Every push to `master` builds the app on GitHub Actions and publishes a new release, one patch version higher than the last (`.github/workflows/release.yml`). Installed copies pick it up through Check for updates. You can also start a release by hand from the repository's Actions tab.
