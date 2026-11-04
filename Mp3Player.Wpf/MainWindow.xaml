@@ -698,8 +698,12 @@
 
                     <TextBlock Margin="0,18,0,0" FontSize="12" HorizontalAlignment="Center"
                                Foreground="{StaticResource TextTertiary}" Text="© 2026 Per Hejndorf"/>
-                    <Button x:Name="AboutCloseButton" Style="{StaticResource AccentPill}" Content="Close"
-                            MinWidth="110" Margin="0,18,0,0" HorizontalAlignment="Center" Click="AboutClose_Click"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,18,0,0" HorizontalAlignment="Center">
+                        <Button Style="{StaticResource AccentPill}" Content="Check for updates"
+                                Margin="0,0,8,0" Click="CheckForUpdates_Click"/>
+                        <Button x:Name="AboutCloseButton" Style="{StaticResource AccentPill}" Content="Close"
+                                MinWidth="110" Click="AboutClose_Click"/>
+                    </StackPanel>
                 </StackPanel>
             </Border>
         </Grid>

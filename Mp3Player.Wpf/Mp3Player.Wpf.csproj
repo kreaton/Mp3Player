@@ -8,6 +8,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>Mp3PlayerWpf</AssemblyName>
     <RootNamespace>Mp3Player.Wpf</RootNamespace>
+    <!-- Velopack's Program.Main replaces the generated WPF entry point -->
+    <StartupObject>Mp3Player.Wpf.Program</StartupObject>
     <ApplicationIcon>app.ico</ApplicationIcon>
     <Version>1.1.0</Version>
     <!-- WPF's built-in Fluent theme (ThemeMode) is still flagged experimental in .NET 10. -->
@@ -20,6 +22,10 @@
 
   <ItemGroup>
     <Resource Include="app.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Velopack" Version="1.2.161" />
   </ItemGroup>
 
 </Project>

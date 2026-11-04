@@ -11,6 +11,8 @@ using System.Windows.Navigation;
 using System.Windows.Threading;
 using Microsoft.Win32;
 using Mp3Player.Core;
+using Velopack;
+using Velopack.Sources;
 
 namespace Mp3Player.Wpf;
 
@@ -20,6 +22,10 @@ namespace Mp3Player.Wpf;
 /// </summary>
 internal partial class MainWindow : Window, IDialogService
 {
+    // Public GitHub repo whose releases BuildRelease.ps1 uploads to
+    private const string RepoUrl = "https://github.com/kreaton/Mp3Player";
+
+    private readonly UpdateManager _updateManager = new(new GithubSource(RepoUrl, accessToken: null, prerelease: false));
     private readonly PlayerViewModel _vm;
     private TaskCompletionSource<bool>? _confirmation;
 
@@ -178,6 +184,41 @@ internal partial class MainWindow : Window, IDialogService
         AboutOverlay.Visibility = Visibility.Collapsed;
         MainLayer.IsEnabled = true;
         Focus();
+    }
+
+    private async void CheckForUpdates_Click(object sender, RoutedEventArgs e)
+    {
+        if (!_updateManager.IsInstalled)
+        {
+            MessageBox.Show(this, "Updates are only available in the installed app.", "Update Check", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        try
+        {
+            var newVersion = await _updateManager.CheckForUpdatesAsync();
+            if (newVersion == null)
+            {
+                MessageBox.Show(this, "No updates available.", "Update Check", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var confirm = MessageBox.Show(this,
+                $"A new version ({newVersion.TargetFullRelease.Version}) is available. Do you want to download and install it now?",
+                "Update Available", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (confirm != MessageBoxResult.Yes)
+                return;
+
+            await _updateManager.DownloadUpdatesAsync(newVersion);
+
+            // Install and restart once the window has closed the normal way, saving the settings
+            _updateManager.WaitExitThenApplyUpdates(newVersion);
+            Close();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this, $"Update failed: {ex.Message}", "Update Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     private void AboutClose_Click(object sender, RoutedEventArgs e) => CloseAbout();
