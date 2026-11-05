@@ -1,8 +1,16 @@
 # MP3 Player
 
-A music player for Windows that plays every MP3 in a folder and all its subfolders. There's no library to build: open a folder and listen. If a track or album turns out not to be worth keeping, you can clean it up while it plays.
+[![Release](https://img.shields.io/github/v/release/kreaton/Mp3Player)](https://github.com/kreaton/Mp3Player/releases/latest)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+![Windows](https://img.shields.io/badge/platform-Windows-lightgrey)
+![.NET 10](https://img.shields.io/badge/.NET-10-lightgrey)
+![WPF](https://img.shields.io/badge/UI-WPF-lightgrey)
 
-![MP3 Player playing a track, with cover art, file details and tag information](promo-video/public/app/main-neon.png)
+![MP3 Player: open a folder and listen, with no library to build](images/banner.png)
+
+**A music player for Windows that plays every MP3 in a folder and all its subfolders.**
+
+There's no library to build: open a folder and listen. If a track or album turns out not to be worth keeping, you can clean it up while it plays.
 
 ## Install
 
@@ -21,6 +29,8 @@ To get a newer version later, click the ⓘ button and choose **Check for update
 - **Track details:** shows the title, artist, album and cover art, and the window takes its accent color from the cover.
 - **Clean-up while you listen:** delete the current track, or the whole folder it's in (usually an album). Both ask first and send the files to the Recycle Bin. You can't delete the folder for tracks that sit directly in the folder you opened.
 - **Remembers your settings:** your last folder, volume, shuffle and crossfade are still there next time.
+
+![MP3 Player playing a track, with cover art, file details and tag information](promo-video/public/app/main-neon.png)
 
 ## Keyboard shortcuts
 
