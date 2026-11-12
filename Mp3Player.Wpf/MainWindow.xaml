@@ -778,7 +778,11 @@
                     </DockPanel>
                     <DockPanel Margin="0,0,0,10">
                         <StackPanel Orientation="Horizontal" Width="150" DockPanel.Dock="Left" VerticalAlignment="Center"><ContentControl Style="{StaticResource KeyCap}" Content="Media keys"/></StackPanel>
-                        <TextBlock Text="Play/pause, next and previous, even when the player is in the background" FontSize="13.5" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                        <TextBlock Text="The ⏯ ⏮ ⏭ keys on your keyboard, if it has them (some need Fn): play/pause, previous and next, even when the player is in the background" FontSize="13.5" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                    </DockPanel>
+                    <DockPanel Margin="0,0,0,10">
+                        <StackPanel Orientation="Horizontal" Width="150" DockPanel.Dock="Left" VerticalAlignment="Center"><ContentControl Style="{StaticResource KeyCap}" Content="Win"/><ContentControl Style="{StaticResource KeyCap}" Content="A"/></StackPanel>
+                        <TextBlock Text="No media keys? Windows Quick Settings shows the player's play/pause, previous and next, from any app" FontSize="13.5" TextWrapping="Wrap" VerticalAlignment="Center"/>
                     </DockPanel>
                     <DockPanel Margin="0,0,0,10">
                         <StackPanel Orientation="Horizontal" Width="150" DockPanel.Dock="Left" VerticalAlignment="Center"><ContentControl Style="{StaticResource KeyCap}" Content="F1"/></StackPanel>

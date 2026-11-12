@@ -47,7 +47,8 @@ To get a newer version later, click the ⓘ button and choose **Check for update
 | S | Shuffle on / off |
 | Ctrl+F | Search |
 | F1 | This list of shortcuts, inside the app |
-| Media keys | Play/pause, next and previous, even when the player is in the background |
+| Media keys (⏯ ⏮ ⏭ on the keyboard) | Play/pause, previous and next, even when the player is in the background. Only if your keyboard has them; on some keyboards they need Fn. |
+| Win+A | No media keys? Windows Quick Settings shows the player's play/pause, previous and next, from any app |
 
 Space always means play/pause, even right after you've clicked a button. To press a focused button from the keyboard, use Enter.
 
