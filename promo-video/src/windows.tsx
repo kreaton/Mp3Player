@@ -15,6 +15,9 @@ const GLYPHS = {
 	next: 'M2,2 L10,8 L2,14 Z M11,2 H14 V14 H11 Z',
 	play: 'M4,2 L14,8 L4,14 Z',
 	pause: 'M3,2 H7 V14 H3 Z M9,2 H13 V14 H9 Z',
+	playpause: 'M0.5,3 L6.5,8 L0.5,13 Z M7,13.5 L10,2.5 H11 L8,13.5 Z M11.5,3 H13 V13 H11.5 Z M14,3 H15.5 V13 H14 Z',
+	stop: 'M3.5,3.5 H12.5 V12.5 H3.5 Z',
+	mute: 'M1,5.5 H4 L8,2 V14 L4,10.5 H1 Z M10,4.5 L15.5,11 L14.5,12 L9,5.5 Z',
 	bell: 'M8,1.5 C5.2,1.5 4,3.6 4,6 V9.5 L2.5,12 H13.5 L12,9.5 V6 C12,3.6 10.8,1.5 8,1.5 Z M6.3,13 H9.7 C9.7,14 9,14.8 8,14.8 C7,14.8 6.3,14 6.3,13 Z',
 };
 export type GlyphName = keyof typeof GLYPHS;
@@ -234,23 +237,88 @@ export const TaskbarDesk = () => {
 
 // ---------------------------------------------------------------- media overlay and notification
 
-const KeyCap = ({glyph, pressed}: {glyph: GlyphName; pressed: boolean}) => (
+/** One key of the media cluster: dark and glossy, like the row above the F-keys on a multimedia keyboard. */
+const MediaKey = ({children, width = 96, round = false, pressed = false, accent}: {children: ReactNode; width?: number; round?: boolean; pressed?: boolean; accent: string}) => (
 	<div
 		style={{
-			width: 92,
-			height: 80,
-			borderRadius: 14,
+			width,
+			height: round ? width : 84,
+			borderRadius: round ? '50%' : 22,
 			display: 'flex',
+			flexDirection: 'column',
 			alignItems: 'center',
 			justifyContent: 'center',
-			background: pressed ? 'linear-gradient(#d5d5e0, #c4c4d2)' : 'linear-gradient(#f7f7fb, #d5d5e0)',
-			boxShadow: pressed ? '0 2px 0 #8e8ea0, 0 6px 12px rgba(0,0,0,0.5)' : '0 6px 0 #8e8ea0, 0 13px 22px rgba(0,0,0,0.5)',
+			background: pressed ? 'linear-gradient(#2a3442, #1a212c)' : 'linear-gradient(#4a5462, #262d38 55%, #1c222b)',
+			boxShadow: pressed
+				? `0 1px 0 #0b0e13, 0 0 26px ${accent}, inset 0 2px 6px rgba(0,0,0,0.6)`
+				: '0 5px 0 #0b0e13, 0 10px 18px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.22)',
 			transform: `translateY(${pressed ? 4 : 0}px)`,
 		}}
 	>
-		<Glyph name={glyph} size={34} color="#16161f" />
+		{children}
 	</div>
 );
+
+/** The media keys of a keyboard (drawn after a photo of one), and, for keyboards without them, Win+A. */
+const MediaKeys = ({pressNext}: {pressNext: boolean}) => {
+	const accent = useAccent();
+	const phone = useIsPhone();
+	const glyph = '#d9dde4';
+	const label = {fontSize: 17, fontWeight: 600, color: '#aab2bf', marginTop: 6};
+	return (
+		<div style={{position: 'absolute', left: 0, right: 0, top: 24, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 26}}>
+			<div
+				style={{
+					display: 'flex',
+					alignItems: 'center',
+					gap: 8,
+					padding: '12px 16px',
+					borderRadius: 999,
+					background: 'linear-gradient(#141920, #20262f)',
+					boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.8), 0 1px 0 rgba(255,255,255,0.12)',
+				}}
+			>
+				{phone ? null : (
+					<div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', marginRight: 6}}>
+						<MediaKey width={62} round accent={accent}>
+							<Glyph name="mute" size={26} color={glyph} />
+						</MediaKey>
+					</div>
+				)}
+				<MediaKey accent={accent}>
+					<Glyph name="playpause" size={34} color={glyph} />
+				</MediaKey>
+				<MediaKey accent={accent}>
+					<Glyph name="stop" size={26} color={glyph} />
+				</MediaKey>
+				<div style={{width: 96, height: 84, borderRadius: 22, overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 5px 0 #0b0e13, 0 10px 18px rgba(0,0,0,0.55)'}}>
+					{['+', '−'].map((t, i) => (
+						<div key={t} style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 30, fontWeight: 800, color: glyph, background: 'linear-gradient(#4a5462, #262d38)', borderTop: i ? '2px solid #0b0e13' : 'none'}}>
+							{t}
+						</div>
+					))}
+				</div>
+				<MediaKey accent={accent}>
+					<Glyph name="previous" size={28} color={glyph} />
+				</MediaKey>
+				<MediaKey pressed={pressNext} accent={accent}>
+					<Glyph name="next" size={28} color={pressNext ? '#fff' : glyph} />
+				</MediaKey>
+			</div>
+			<div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+				<div style={{display: 'flex', alignItems: 'center', gap: 8, fontSize: 24, fontWeight: 700}}>
+					{['Win', 'A'].map((k, i) => (
+						<span key={k} style={{display: 'flex', alignItems: 'center', gap: 8}}>
+							{i ? <span style={{color: '#aab2bf'}}>+</span> : null}
+							<span style={{padding: '10px 16px', borderRadius: 10, background: 'linear-gradient(#f7f7fb, #d5d5e0)', color: '#16161f', boxShadow: '0 4px 0 #8e8ea0'}}>{k}</span>
+						</span>
+					))}
+				</div>
+				<div style={label}>no media keys?</div>
+			</div>
+		</div>
+	);
+};
 
 const TRACKS = [
 	{cover: 'main-lena', title: 'Slow Bloom', artist: 'Lena Sol', album: 'Slow Bloom', at: 94, length: 182},
@@ -275,16 +343,12 @@ export const MediaDesk = () => {
 
 	const cardW = phone ? 760 : 640;
 	const cardLeft = (W - cardW) / 2;
-	const cardTop = phone ? 170 : 150;
+	const cardTop = phone ? 180 : 168;
 
 	return (
 		<Desk>
-			{/* the keyboard's media keys */}
-			<div style={{position: 'absolute', left: 0, right: 0, top: 32, display: 'flex', justifyContent: 'center', gap: 22}}>
-				<KeyCap glyph="previous" pressed={false} />
-				<KeyCap glyph="pause" pressed={false} />
-				<KeyCap glyph="next" pressed={pressed} />
-			</div>
+			{/* the keyboard's media keys, or Win+A */}
+			<MediaKeys pressNext={pressed} />
 
 			{/* the Windows media overlay */}
 			<div

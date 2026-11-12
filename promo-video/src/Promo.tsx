@@ -2,7 +2,7 @@ import type {ReactNode} from 'react';
 import {AbsoluteFill, Html5Audio, Img, interpolate, Sequence, spring, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import {ACCENT, Caption, Confetti, type Focus, fontFamily, Key, Shot, Stage, useAccent, useIsPhone, Visualizer, WHOLE, Words} from './parts';
 import {b, beatPulse, SHORT_FRAMES, TOTAL_FRAMES} from './timing';
-import {MediaDesk, TaskbarDesk} from './windows';
+import {Glyph, MediaDesk, TaskbarDesk} from './windows';
 
 /** A sequence placed in beats of the song. */
 const Beats = ({from, to, children}: {from: number; to: number; children: ReactNode}) => {
@@ -134,7 +134,7 @@ const Listen = () => (
 	</>
 );
 
-const Shortcut = ({keys, label, delay}: {keys: string[]; label: string; delay: number}) => {
+const Shortcut = ({keys, label, delay}: {keys: ReactNode[]; label: string; delay: number}) => {
 	const frame = useCurrentFrame();
 	const {fps} = useVideoConfig();
 	const phone = useIsPhone();
@@ -142,8 +142,8 @@ const Shortcut = ({keys, label, delay}: {keys: string[]; label: string; delay: n
 	return (
 		<div style={{display: 'flex', alignItems: 'center', gap: 30, opacity: Math.min(1, s * 1.4), transform: `translateY(${(1 - s) * 30}px)`, height: 110}}>
 			<div style={{display: 'flex', gap: 12, width: phone ? 340 : 370, justifyContent: 'flex-end'}}>
-				{keys.map((k) => (
-					<Key key={k} size={phone ? 40 : 44}>
+				{keys.map((k, i) => (
+					<Key key={i} size={phone ? 40 : 44}>
 						{k}
 					</Key>
 				))}
@@ -156,13 +156,16 @@ const Shortcut = ({keys, label, delay}: {keys: string[]; label: string; delay: n
 const Keyboard = () => {
 	const beat = useBeatFrames(1);
 	const phone = useIsPhone();
-	const rows: [string[], string][] = [
+	const media = (g: 'playpause' | 'previous' | 'next') => <Glyph name={g} size={phone ? 34 : 38} color="#16161f" />;
+	const rows: [ReactNode[], string][] = [
 		[['Space'], 'Play / pause'],
 		[['Ctrl', '←', '→'], 'Previous / next'],
 		[['←', '→'], 'Seek 5 seconds'],
 		[['↑', '↓'], 'Volume'],
 		[['S'], 'Shuffle'],
 		[['Ctrl', 'F'], 'Search'],
+		[[media('playpause'), media('previous'), media('next')], 'Media keys, any app'],
+		[['Win', 'A'], 'No media keys?'],
 	];
 	return (
 		<>
@@ -171,9 +174,9 @@ const Keyboard = () => {
 				<div style={{fontSize: phone ? 92 : 104, lineHeight: 1.05, width: phone ? 900 : undefined, fontWeight: 800, color: '#fff', letterSpacing: -2, marginBottom: phone ? 50 : 70}}>
 					<Words text="Your hands stay on the keys" />
 				</div>
-				<div style={{display: 'grid', gridTemplateColumns: phone ? 'auto' : 'auto auto', columnGap: 60, rowGap: phone ? 8 : 50}}>
+				<div style={{display: 'grid', gridTemplateColumns: phone ? 'auto' : 'auto auto', columnGap: 60, rowGap: phone ? 8 : 30}}>
 					{rows.map(([keys, label], i) => (
-						<Shortcut key={label} keys={keys} label={label} delay={8 + i * beat} />
+						<Shortcut key={label} keys={keys} label={label} delay={6 + i * beat * 0.7} />
 					))}
 				</div>
 			</AbsoluteFill>
@@ -185,7 +188,7 @@ const WindowsMedia = () => (
 	<>
 		<Caption
 			title="Plays nicely with Windows"
-			sub={useIsPhone() ? 'Media keys work from any app, and Windows shows what is playing.' : "Media keys work from any app, the Windows media overlay shows what's on, and an optional notification tells you when the track changes."}
+			sub={useIsPhone() ? "Your keyboard's media keys, or Win+A if it has none. Windows shows what is playing." : "Use your keyboard's media keys, or Win+A if it has none. Windows shows what's on, and an optional notification tells you when the track changes."}
 			subDelay={14}
 		/>
 		<MediaDesk />

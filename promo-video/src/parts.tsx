@@ -282,7 +282,7 @@ export const Caption = ({kicker, title, sub, subDelay = 12, children}: {kicker?:
 	);
 };
 
-export const Key = ({children, size = 44}: {children: string; size?: number}) => (
+export const Key = ({children, size = 44}: {children: ReactNode; size?: number}) => (
 	<span
 		style={{
 			display: 'inline-flex',
