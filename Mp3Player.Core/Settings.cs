@@ -14,6 +14,12 @@ public sealed class Settings
     public bool Crossfade { get; set; }
     public int CrossfadeSeconds { get; set; } = 4;
 
+    /// <summary>Show a Windows notification when a new track starts while the player window is in the background.</summary>
+    public bool TrackNotifications { get; set; }
+
+    /// <summary>Delete the current track right away, without asking first (folders are always confirmed).</summary>
+    public bool DeleteTrackWithoutConfirmation { get; set; }
+
     private static string FilePath => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Mp3Player", "settings.json");
 

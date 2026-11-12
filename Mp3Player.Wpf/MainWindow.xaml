@@ -366,7 +366,7 @@
 
                 <Button Grid.Column="2" Style="{StaticResource DangerPill}" Command="{Binding DeleteTrackCommand}"
                         Margin="0,0,10,0"
-                        ToolTip="Ask for confirmation, then skip to the next track and delete this file">
+                        ToolTip="Skip to the next track and delete this file (asks first unless 'Delete without asking' is on)">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE74D;" FontSize="14" Margin="0,1,8,0"/>
                         <TextBlock Text="Delete track"/>
@@ -566,6 +566,16 @@
                         </StackPanel>
 
                         <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <ToggleButton Style="{StaticResource ChipToggle}" Margin="0,0,16,0"
+                                          IsChecked="{Binding TrackNotifications, Mode=TwoWay}"
+                                          ToolTip="Show a Windows notification when a new track starts while the player is in the background">
+                                <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xEA8F;" Margin="0,1,0,0"/>
+                            </ToggleButton>
+                            <ToggleButton Style="{StaticResource ChipToggle}" Margin="-6,0,16,0"
+                                          IsChecked="{Binding DeleteWithoutConfirmation, Mode=TwoWay}"
+                                          ToolTip="Delete without asking: 'Delete track' (and the taskbar delete button) deletes right away. Deleting a folder always asks.">
+                                <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE74D;" Margin="0,1,0,0"/>
+                            </ToggleButton>
                             <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE767;" FontSize="16"
                                        Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center" Margin="0,0,10,0"/>
                             <Slider Style="{StaticResource FancySlider}" Width="140" Minimum="0" Maximum="100"

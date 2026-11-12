@@ -36,6 +36,8 @@ internal sealed class PlayerViewModel : INotifyPropertyChanged, IDisposable
         _crossfadeEnabled = _settings.Crossfade;
         _crossfadeSeconds = _settings.CrossfadeSeconds;
         _volume = _settings.Volume;
+        _trackNotifications = _settings.TrackNotifications;
+        _deleteWithoutConfirmation = _settings.DeleteTrackWithoutConfirmation;
         _player.Shuffle = _shuffle;
         ApplyCrossfade();
         _player.Volume = (int)Math.Round(_volume);
@@ -53,6 +55,7 @@ internal sealed class PlayerViewModel : INotifyPropertyChanged, IDisposable
             _note = "";
             RefreshTrack();
             RefreshState();
+            TrackChanged?.Invoke(this, EventArgs.Empty);
         };
         _player.Notice += (_, message) =>
         {
@@ -82,6 +85,16 @@ internal sealed class PlayerViewModel : INotifyPropertyChanged, IDisposable
         Raise(name);
         return true;
     }
+
+    // ------------------------------------------------------------------ for the OS integrations (media overlay, taskbar, notifications)
+
+    /// <summary>The current track changed; <see cref="CurrentInfo"/> and <see cref="CurrentPath"/> are up to date.</summary>
+    public event EventHandler? TrackChanged;
+
+    public TrackInfo? CurrentInfo => _player.CurrentInfo;
+    public string? CurrentPath => _player.CurrentPath;
+    public TimeSpan Position => _player.Position;
+    public TimeSpan Duration => _player.Duration;
 
     // ------------------------------------------------------------------ commands
 
@@ -298,7 +311,7 @@ internal sealed class PlayerViewModel : INotifyPropertyChanged, IDisposable
 
     // ------------------------------------------------------------------ options
 
-    private bool _shuffle, _crossfadeEnabled;
+    private bool _shuffle, _crossfadeEnabled, _trackNotifications, _deleteWithoutConfirmation;
     private double _crossfadeSeconds, _volume;
 
     public bool Shuffle
@@ -317,6 +330,20 @@ internal sealed class PlayerViewModel : INotifyPropertyChanged, IDisposable
     {
         get => _crossfadeSeconds;
         set { if (Set(ref _crossfadeSeconds, Math.Round(value))) ApplyCrossfade(); }
+    }
+
+    /// <summary>Show a Windows notification when a new track starts while the window is in the background.</summary>
+    public bool TrackNotifications
+    {
+        get => _trackNotifications;
+        set => Set(ref _trackNotifications, value);
+    }
+
+    /// <summary>Delete track skips the confirmation card. Deleting a folder is always confirmed.</summary>
+    public bool DeleteWithoutConfirmation
+    {
+        get => _deleteWithoutConfirmation;
+        set => Set(ref _deleteWithoutConfirmation, value);
     }
 
     public double Volume
@@ -403,15 +430,18 @@ internal sealed class PlayerViewModel : INotifyPropertyChanged, IDisposable
         string? path = _player.CurrentPath;
         if (path == null) return;
 
-        bool wasPlaying = PauseForPrompt();
-        string how = UseRecycleBin ? "It will be moved to the Recycle Bin" : "It will be deleted permanently";
-        bool confirmed = await _dialogs.ConfirmAsync(
-            "Delete this track?", $"{how}, and the next track will play.", path, "Delete track");
-
-        if (!confirmed)
+        if (!_deleteWithoutConfirmation)
         {
-            ResumeAfterPrompt(wasPlaying);
-            return;
+            bool wasPlaying = PauseForPrompt();
+            string how = UseRecycleBin ? "It will be moved to the Recycle Bin" : "It will be deleted permanently";
+            bool confirmed = await _dialogs.ConfirmAsync(
+                "Delete this track?", $"{how}, and the next track will play.", path, "Delete track");
+
+            if (!confirmed)
+            {
+                ResumeAfterPrompt(wasPlaying);
+                return;
+            }
         }
 
         try
@@ -475,6 +505,8 @@ internal sealed class PlayerViewModel : INotifyPropertyChanged, IDisposable
         _settings.Shuffle = _shuffle;
         _settings.Crossfade = _crossfadeEnabled;
         _settings.CrossfadeSeconds = (int)_crossfadeSeconds;
+        _settings.TrackNotifications = _trackNotifications;
+        _settings.DeleteTrackWithoutConfirmation = _deleteWithoutConfirmation;
         _settings.Save();
         _player.Dispose();
     }
