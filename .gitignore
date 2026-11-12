@@ -361,3 +361,5 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# Demo MP3 library for screenshots; rebuild it with testmp3/MakeLibrary.cs
+testmp3/Party Night/

@@ -4,10 +4,10 @@ Two introductions to the player, made with [Remotion](https://www.remotion.dev/)
 
 | Composition | Format | Length | File |
 |---|---|---|---|
-| `Promo` | Landscape, 3840×2160 | 87 s | `out/mp3player-promo-4k.mp4` |
+| `Promo` | Landscape, 3840×2160 | 92 s | `out/mp3player-promo-4k.mp4` |
 | `PromoShort` | Portrait, 2160×3840, for YouTube Shorts | Under 60 s | `out/mp3player-short-4k.mp4` |
 
-The landscape video is edited to the music: every cut is placed in beats of the song, and the sections follow the song's structure (party on the loud opening, listening on the breakdown, clean-up on the build back up).
+The landscape video is edited to the music: every cut is placed in beats of the song, and the sections follow the song's structure (party on the loud opening, listening and the Windows integration on the breakdown, clean-up and the taskbar buttons on the build back up).
 
 ## Setup
 
@@ -35,13 +35,14 @@ That renders both videos. `npm run render:landscape` and `npm run render:short` 
 |---|---|
 | `src/Promo.tsx` | The scenes and the timeline, which is the place to change wording or timing. |
 | `src/parts.tsx` | Background, music visualizer, confetti, app window with camera, captions and key caps. |
+| `src/windows.tsx` | The Windows parts: taskbar preview with its buttons, the media overlay and the notification, drawn in vector around cut-outs of the screenshots. |
 | `src/timing.ts` | Converts beats of the song to frames. |
 | `src/beat.json` | Tempo and first beat, written by `scripts/analyze-beat.mjs`. Run that script again if you change the music. |
 | `public/app/` | Screenshots of the real WPF app. |
 
 ## About the Short
 
-YouTube accepts Shorts of up to three minutes, but blocks a Short of one to three minutes if it has an active Content ID claim. So this one stays under a minute (`SHORT_FRAMES` in `src/timing.ts`). It plays the song unedited from the start and leaves out the folder scene. Its captions stay in the upper part of the frame, and the app window stops above where YouTube draws its title and buttons.
+YouTube accepts Shorts of up to three minutes, but blocks a Short of one to three minutes if it has an active Content ID claim. So this one stays under a minute (`SHORT_FRAMES` in `src/timing.ts`). It plays the song unedited from the start and leaves out the folder and keyboard scenes. Its captions stay in the upper part of the frame, and the app window stops above where YouTube draws its title and buttons.
 
 ## About the screenshots
 

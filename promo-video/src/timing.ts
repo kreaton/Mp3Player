@@ -6,8 +6,8 @@ const SECONDS_PER_BEAT = 60 / beat.bpm;
 /** The frame of a beat of the song; every cut in the video is placed with this. */
 export const b = (n: number) => Math.round((beat.firstBeat + n * SECONDS_PER_BEAT) * FPS);
 
-/** Length of the video: the credits end a little into the song's second breakdown. */
-export const TOTAL_FRAMES = b(146);
+/** Length of the video: the credits end a little into the song's second breakdown (beat 140). */
+export const TOTAL_FRAMES = b(154);
 
 /** Length of the portrait Short: under a minute, so a claim on the music can't get it blocked. */
 export const SHORT_FRAMES = b(100);

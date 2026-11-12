@@ -2,6 +2,7 @@ import type {ReactNode} from 'react';
 import {AbsoluteFill, Html5Audio, Img, interpolate, Sequence, spring, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import {ACCENT, Caption, Confetti, type Focus, fontFamily, Key, Shot, Stage, useAccent, useIsPhone, Visualizer, WHOLE, Words} from './parts';
 import {b, beatPulse, SHORT_FRAMES, TOTAL_FRAMES} from './timing';
+import {MediaDesk, TaskbarDesk} from './windows';
 
 /** A sequence placed in beats of the song. */
 const Beats = ({from, to, children}: {from: number; to: number; children: ReactNode}) => {
@@ -180,6 +181,17 @@ const Keyboard = () => {
 	);
 };
 
+const WindowsMedia = () => (
+	<>
+		<Caption
+			title="Plays nicely with Windows"
+			sub={useIsPhone() ? 'Media keys work from any app, and Windows shows what is playing.' : "Media keys work from any app, the Windows media overlay shows what's on, and an optional notification tells you when the track changes."}
+			subDelay={14}
+		/>
+		<MediaDesk />
+	</>
+);
+
 const Library = () => (
 	<>
 		<Caption title="Open one folder. Get them all." sub="Every MP3 in every subfolder. Your folder, volume and options are remembered." subDelay={14} />
@@ -198,7 +210,7 @@ const CleanUp = () => (
 
 const DeleteTrack = () => (
 	<>
-		<Caption title="Always asks first" sub="It goes to the Recycle Bin, and the next track plays straight away." />
+		<Caption title="Asks first, if you want it to" sub="It goes to the Recycle Bin and the next track plays. Flip the trash toggle to skip the question." />
 		<Shot name="delete-track" from={{x: 0.5, y: 0.5, z: 1.05}} to={{x: 0.5, y: 0.52, z: 1.5}} moveFrames={24} enter={false} phone={{from: {x: 0.5, y: 0.52, z: 1.5}, to: {x: 0.5, y: 0.52, z: 2.1}}} />
 	</>
 );
@@ -207,6 +219,13 @@ const DeleteFolder = () => (
 	<>
 		<Caption title="Whole album of bad demos?" sub={useIsPhone() ? 'One click takes the folder too.' : 'One click takes the folder too. You see exactly what goes before it does.'} subDelay={14} />
 		<Shot name="delete-folder" from={{x: 0.5, y: 0.5, z: 1.5}} enter={false} phone={{from: {x: 0.5, y: 0.5, z: 2}}} />
+	</>
+);
+
+const TaskbarDelete = () => (
+	<>
+		<Caption title="Or straight from the taskbar" sub="Hover the icon for delete, previous, play and next. No need to open the window." subDelay={14} />
+		<TaskbarDesk />
 	</>
 );
 
@@ -270,7 +289,7 @@ const Credits = () => {
 					<Credit key={label} label={label} value={value} delay={6 + i * 6} />
 				))}
 				<div style={{fontSize: 30, fontWeight: 400, color: '#d8d8e4', marginTop: 8, opacity: interpolate(frame, [40, 60], [0, 1], {extrapolateRight: 'clamp'})}}>
-					© 2026 Per Hejndorf · Version 1.1.0
+					© 2026 Per Hejndorf · Version 1.1.2
 					<br />
 					Artists and albums shown are fictional.
 				</div>
@@ -284,7 +303,7 @@ const Credits = () => {
 
 export const Promo = () => {
 	const volume = (frame: number) =>
-		interpolate(frame, [b(141), TOTAL_FRAMES - 4], [1, 0], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
+		interpolate(frame, [b(149), TOTAL_FRAMES - 4], [1, 0], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
 	return (
 		<AbsoluteFill style={{background: '#0a0a10'}}>
 			<Html5Audio src={staticFile('music.mp3')} volume={volume} />
@@ -295,7 +314,7 @@ export const Promo = () => {
 			<Beats from={12} to={60}>
 				<Confetti />
 			</Beats>
-			<Beats from={92} to={124}>
+			<Beats from={92} to={132}>
 				<Confetti count={18} />
 			</Beats>
 			<Visualizer />
@@ -310,16 +329,18 @@ export const Promo = () => {
 			<Beats from={42} to={56}><SearchScene /></Beats>
 			<Beats from={56} to={60}><Requested /></Beats>
 
-			<Beats from={60} to={72}><Listen /></Beats>
-			<Beats from={72} to={84}><Keyboard /></Beats>
+			<Beats from={60} to={68}><Listen /></Beats>
+			<Beats from={68} to={76}><Keyboard /></Beats>
+			<Beats from={76} to={84}><WindowsMedia /></Beats>
 			<Beats from={84} to={92}><Library /></Beats>
 
 			<Beats from={92} to={100}><CleanUp /></Beats>
 			<Beats from={100} to={108}><DeleteTrack /></Beats>
 			<Beats from={108} to={116}><DeleteFolder /></Beats>
+			<Beats from={116} to={124}><TaskbarDelete /></Beats>
 
-			<Beats from={116} to={124}><Finale /></Beats>
-			<Beats from={124} to={146}><Credits /></Beats>
+			<Beats from={124} to={132}><Finale /></Beats>
+			<Beats from={132} to={154}><Credits /></Beats>
 		</AbsoluteFill>
 	);
 };
@@ -382,7 +403,7 @@ const PhoneEnding = () => {
 					<Credit key={label} label={label} value={value} delay={10 + i * 3} />
 				))}
 				<div style={{fontSize: 32, fontWeight: 400, lineHeight: 1.35, color: '#d8d8e4', marginTop: 12, opacity: interpolate(frame, [24, 36], [0, 1], {extrapolateRight: 'clamp'})}}>
-					© 2026 Per Hejndorf · Version 1.1.0
+					© 2026 Per Hejndorf · Version 1.1.2
 					<br />
 					Artists and albums shown are fictional.
 				</div>
@@ -419,11 +440,13 @@ export const PromoShort = () => {
 			<Beats from={42} to={56}><SearchScene /></Beats>
 			<Beats from={56} to={60}><Requested /></Beats>
 
-			<Beats from={60} to={66}><Listen /></Beats>
-			<Beats from={66} to={74}><Keyboard /></Beats>
+			{/* No room for the keyboard shortcuts in a Short: the Windows integration takes their place. */}
+			<Beats from={60} to={65}><Listen /></Beats>
+			<Beats from={65} to={70}><WindowsMedia /></Beats>
+			<Beats from={70} to={74}><TaskbarDelete /></Beats>
 
-			<Beats from={74} to={80}><CleanUp /></Beats>
-			<Beats from={80} to={85}><DeleteTrack /></Beats>
+			<Beats from={74} to={79}><CleanUp /></Beats>
+			<Beats from={79} to={85}><DeleteTrack /></Beats>
 			<Beats from={85} to={90}><DeleteFolder /></Beats>
 
 			<Sequence from={b(90)} durationInFrames={SHORT_FRAMES - b(90)}><PhoneEnding /></Sequence>

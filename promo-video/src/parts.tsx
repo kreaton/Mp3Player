@@ -30,7 +30,7 @@ const COLOR_TRACK: [number, string][] = [
 	[60, ACCENT.lena],
 	[84, ACCENT.velvet],
 	[92, ACCENT.mopeds],
-	[116, ACCENT.violet],
+	[124, ACCENT.violet],
 ];
 
 // The Short has the same party, then reaches clean-up and the ending sooner.
