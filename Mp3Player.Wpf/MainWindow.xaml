@@ -205,6 +205,22 @@
             </Setter>
         </Style>
 
+        <!-- ============================ key caps (keyboard shortcuts card) ============================ -->
+        <Style x:Key="KeyCap" TargetType="ContentControl">
+            <Setter Property="Margin" Value="0,0,6,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ContentControl">
+                        <Border MinWidth="30" Padding="9,3,9,4" CornerRadius="6" Background="#2EFFFFFF"
+                                BorderBrush="#40FFFFFF" BorderThickness="1,1,1,2">
+                            <TextBlock Text="{TemplateBinding Content}" FontSize="12.5" FontWeight="SemiBold"
+                                       HorizontalAlignment="Center" Foreground="{StaticResource TextPrimary}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- ============================ slider ============================ -->
         <Style x:Key="SliderThumbStyle" TargetType="Thumb">
             <Setter Property="Width" Value="16"/>
@@ -380,7 +396,7 @@
                     </StackPanel>
                 </Button>
                 <Button Grid.Column="4" Style="{StaticResource PillButton}" Margin="10,0,0,0" Padding="12,9"
-                        Click="AboutButton_Click" ToolTip="About MP3 Player">
+                        Click="AboutButton_Click" ToolTip="About MP3 Player, and the keyboard shortcuts (F1)">
                     <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE946;" FontSize="15" Margin="0,1,0,0"/>
                 </Button>
             </Grid>
@@ -706,7 +722,10 @@
                         </StackPanel>
                     </Border>
 
-                    <TextBlock Margin="0,18,0,0" FontSize="12" HorizontalAlignment="Center"
+                    <TextBlock Margin="0,16,0,0" FontSize="13" HorizontalAlignment="Center">
+                        <Hyperlink Click="AboutShortcuts_Click" Foreground="{DynamicResource AccentBrush}">Keyboard shortcuts (F1)</Hyperlink>
+                    </TextBlock>
+                    <TextBlock Margin="0,12,0,0" FontSize="12" HorizontalAlignment="Center"
                                Foreground="{StaticResource TextTertiary}" Text="© 2026 Per Hejndorf"/>
                     <StackPanel Orientation="Horizontal" Margin="0,18,0,0" HorizontalAlignment="Center">
                         <Button Style="{StaticResource AccentPill}" Content="Check for updates"
@@ -714,6 +733,65 @@
                         <Button x:Name="AboutCloseButton" Style="{StaticResource AccentPill}" Content="Close"
                                 MinWidth="110" Click="AboutClose_Click"/>
                     </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- ============================ keyboard shortcuts card (overlay; F1 or the About card opens it; click outside or Esc closes it) ============================ -->
+        <Grid x:Name="ShortcutsOverlay" Background="#B2000000" Visibility="Collapsed"
+              MouseLeftButtonDown="ShortcutsOverlay_MouseLeftButtonDown">
+            <Border Width="520" CornerRadius="18" Background="#FF22222E" BorderBrush="#40FFFFFF" BorderThickness="1"
+                    Padding="30,26,30,22" HorizontalAlignment="Center" VerticalAlignment="Center"
+                    MouseLeftButtonDown="Card_MouseLeftButtonDown">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="50" ShadowDepth="14" Direction="270" Opacity="0.7"/>
+                </Border.Effect>
+                <StackPanel>
+                    <TextBlock Text="Keyboard shortcuts" FontSize="21" FontWeight="SemiBold" Margin="0,0,0,18"/>
+                    <DockPanel Margin="0,0,0,10">
+                        <StackPanel Orientation="Horizontal" Width="150" DockPanel.Dock="Left" VerticalAlignment="Center"><ContentControl Style="{StaticResource KeyCap}" Content="Space"/></StackPanel>
+                        <TextBlock Text="Play / pause" FontSize="13.5" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                    </DockPanel>
+                    <DockPanel Margin="0,0,0,10">
+                        <StackPanel Orientation="Horizontal" Width="150" DockPanel.Dock="Left" VerticalAlignment="Center"><ContentControl Style="{StaticResource KeyCap}" Content="Ctrl"/><ContentControl Style="{StaticResource KeyCap}" Content="→"/></StackPanel>
+                        <TextBlock Text="Next track" FontSize="13.5" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                    </DockPanel>
+                    <DockPanel Margin="0,0,0,10">
+                        <StackPanel Orientation="Horizontal" Width="150" DockPanel.Dock="Left" VerticalAlignment="Center"><ContentControl Style="{StaticResource KeyCap}" Content="Ctrl"/><ContentControl Style="{StaticResource KeyCap}" Content="←"/></StackPanel>
+                        <TextBlock Text="Previous track, or back to the start after 3 seconds" FontSize="13.5" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                    </DockPanel>
+                    <DockPanel Margin="0,0,0,10">
+                        <StackPanel Orientation="Horizontal" Width="150" DockPanel.Dock="Left" VerticalAlignment="Center"><ContentControl Style="{StaticResource KeyCap}" Content="→"/><ContentControl Style="{StaticResource KeyCap}" Content="←"/></StackPanel>
+                        <TextBlock Text="Forward / back 5 seconds" FontSize="13.5" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                    </DockPanel>
+                    <DockPanel Margin="0,0,0,10">
+                        <StackPanel Orientation="Horizontal" Width="150" DockPanel.Dock="Left" VerticalAlignment="Center"><ContentControl Style="{StaticResource KeyCap}" Content="↑"/><ContentControl Style="{StaticResource KeyCap}" Content="↓"/></StackPanel>
+                        <TextBlock Text="Volume up / down 5%" FontSize="13.5" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                    </DockPanel>
+                    <DockPanel Margin="0,0,0,10">
+                        <StackPanel Orientation="Horizontal" Width="150" DockPanel.Dock="Left" VerticalAlignment="Center"><ContentControl Style="{StaticResource KeyCap}" Content="S"/></StackPanel>
+                        <TextBlock Text="Shuffle on / off" FontSize="13.5" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                    </DockPanel>
+                    <DockPanel Margin="0,0,0,10">
+                        <StackPanel Orientation="Horizontal" Width="150" DockPanel.Dock="Left" VerticalAlignment="Center"><ContentControl Style="{StaticResource KeyCap}" Content="Ctrl"/><ContentControl Style="{StaticResource KeyCap}" Content="F"/></StackPanel>
+                        <TextBlock Text="Search" FontSize="13.5" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                    </DockPanel>
+                    <DockPanel Margin="0,0,0,10">
+                        <StackPanel Orientation="Horizontal" Width="150" DockPanel.Dock="Left" VerticalAlignment="Center"><ContentControl Style="{StaticResource KeyCap}" Content="Media keys"/></StackPanel>
+                        <TextBlock Text="Play/pause, next and previous, even when the player is in the background" FontSize="13.5" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                    </DockPanel>
+                    <DockPanel Margin="0,0,0,10">
+                        <StackPanel Orientation="Horizontal" Width="150" DockPanel.Dock="Left" VerticalAlignment="Center"><ContentControl Style="{StaticResource KeyCap}" Content="F1"/></StackPanel>
+                        <TextBlock Text="This overview" FontSize="13.5" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                    </DockPanel>
+                    <DockPanel Margin="0,0,0,10">
+                        <StackPanel Orientation="Horizontal" Width="150" DockPanel.Dock="Left" VerticalAlignment="Center"><ContentControl Style="{StaticResource KeyCap}" Content="Esc"/></StackPanel>
+                        <TextBlock Text="Close a card" FontSize="13.5" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                    </DockPanel>
+                    <TextBlock Margin="0,6,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource TextTertiary}"
+                               Text="Space always means play/pause, even right after you've clicked a button. To press a focused button from the keyboard, use Enter."/>
+                    <Button x:Name="ShortcutsCloseButton" Style="{StaticResource AccentPill}" Content="Close" MinWidth="110"
+                            Margin="0,18,0,0" HorizontalAlignment="Right" Click="ShortcutsClose_Click"/>
                 </StackPanel>
             </Border>
         </Grid>

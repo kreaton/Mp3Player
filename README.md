@@ -46,6 +46,7 @@ To get a newer version later, click the ⓘ button and choose **Check for update
 | Up / Down | Volume up / down 5% |
 | S | Shuffle on / off |
 | Ctrl+F | Search |
+| F1 | This list of shortcuts, inside the app |
 | Media keys | Play/pause, next and previous, even when the player is in the background |
 
 Space always means play/pause, even right after you've clicked a button. To press a focused button from the keyboard, use Enter.

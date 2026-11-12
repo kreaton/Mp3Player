@@ -250,6 +250,12 @@ internal partial class MainWindow : Window, IDialogService
 
     private void AboutClose_Click(object sender, RoutedEventArgs e) => CloseAbout();
 
+    private void AboutShortcuts_Click(object sender, RoutedEventArgs e)
+    {
+        CloseAbout();
+        OpenShortcuts();
+    }
+
     private void AboutOverlay_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) => CloseAbout();
 
     // Clicks on the card itself must not reach the overlay behind it.
@@ -282,6 +288,27 @@ internal partial class MainWindow : Window, IDialogService
             return null;
         }
     }
+
+    // ------------------------------------------------------------------ keyboard shortcuts card
+
+    private void OpenShortcuts()
+    {
+        MainLayer.IsEnabled = false;
+        ShortcutsOverlay.Visibility = Visibility.Visible;
+        FadeIn(ShortcutsOverlay, 1.0, 160);
+        Dispatcher.BeginInvoke(new Action(() => ShortcutsCloseButton.Focus()), DispatcherPriority.Input);
+    }
+
+    private void CloseShortcuts()
+    {
+        ShortcutsOverlay.Visibility = Visibility.Collapsed;
+        MainLayer.IsEnabled = true;
+        Focus();
+    }
+
+    private void ShortcutsClose_Click(object sender, RoutedEventArgs e) => CloseShortcuts();
+
+    private void ShortcutsOverlay_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) => CloseShortcuts();
 
     // ------------------------------------------------------------------ search card
 
@@ -374,10 +401,13 @@ internal partial class MainWindow : Window, IDialogService
 
     private void OnPreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (_confirmation != null || AboutOverlay.Visibility == Visibility.Visible)
+        if (_confirmation != null || AboutOverlay.Visibility == Visibility.Visible
+            || ShortcutsOverlay.Visibility == Visibility.Visible)
         {
-            if (e.Key != Key.Escape) return;      // no shortcuts underneath a card
+            bool closeShortcuts = ShortcutsOverlay.Visibility == Visibility.Visible && e.Key == Key.F1;
+            if (e.Key != Key.Escape && !closeShortcuts) return;      // no shortcuts underneath a card
             if (_confirmation != null) CloseConfirmation(false);
+            else if (ShortcutsOverlay.Visibility == Visibility.Visible) CloseShortcuts();
             else CloseAbout();
             e.Handled = true;
         }
@@ -432,6 +462,9 @@ internal partial class MainWindow : Window, IDialogService
                 break;
             case (Key.F, ModifierKeys.Control) when !e.IsRepeat:
                 OpenSearch();
+                break;
+            case (Key.F1, ModifierKeys.None) when !e.IsRepeat:
+                OpenShortcuts();
                 break;
             default:
                 return;
