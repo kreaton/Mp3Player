@@ -4,6 +4,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
@@ -27,6 +28,8 @@ internal partial class MainWindow : Window, IDialogService
 
     private readonly UpdateManager _updateManager = new(new GithubSource(RepoUrl, accessToken: null, prerelease: false));
     private readonly PlayerViewModel _vm;
+    private readonly TrackNotifier _notifier;
+    private MediaSession? _mediaSession;
     private TaskCompletionSource<bool>? _confirmation;
 
     public MainWindow(string? startFolder)
@@ -58,6 +61,30 @@ internal partial class MainWindow : Window, IDialogService
             await _vm.InitializeAsync();
         };
         Closing += OnClosing;
+
+        // Windows integration: taskbar thumbnail buttons, the media overlay (SMTC), and "now playing" notifications.
+        _ = new TaskbarButtons(this, _vm, BringToFront);
+        SourceInitialized += (_, _) =>
+            _mediaSession = MediaSession.TryCreate(new WindowInteropHelper(this).Handle, _vm, Dispatcher);
+        _notifier = new TrackNotifier(() => Dispatcher.BeginInvoke(BringToFront));
+        _vm.TrackChanged += (_, _) =>
+            // After the StateChanged that follows a track change, so IsPlaying is current.
+            Dispatcher.BeginInvoke(NotifyTrack, DispatcherPriority.Background);
+    }
+
+    // ------------------------------------------------------------------ "now playing" notification
+
+    private void NotifyTrack()
+    {
+        // Only when it is useful: switched on, actually playing, and the window is not already in front of you.
+        if (!_vm.TrackNotifications || !_vm.IsPlaying || IsActive || _vm.CurrentInfo == null) return;
+        _notifier.Show(_vm.Heading, _vm.SubHeading, _vm.CurrentInfo.CoverArt);
+    }
+
+    private void BringToFront()
+    {
+        if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
+        Activate();
     }
 
     // ------------------------------------------------------------------ view-model -> view effects
@@ -367,6 +394,8 @@ internal partial class MainWindow : Window, IDialogService
     /// <summary>
     /// The player's shortcuts. They are handled here, before the focused control sees them, so Space always means
     /// play/pause (not "click the button you just used") and the arrows work wherever the focus is.
+    /// With the media overlay (SMTC) active, Windows delivers the hardware media keys through it instead,
+    /// so they are left alone here to avoid acting on one key press twice.
     /// </summary>
     private void HandleShortcut(KeyEventArgs e)
     {
@@ -375,15 +404,15 @@ internal partial class MainWindow : Window, IDialogService
         switch (e.Key, Keyboard.Modifiers)
         {
             case (Key.Space, ModifierKeys.None) when !e.IsRepeat:
-            case (Key.MediaPlayPause, ModifierKeys.None) when !e.IsRepeat:
+            case (Key.MediaPlayPause, ModifierKeys.None) when !e.IsRepeat && _mediaSession == null:
                 Run(_vm.PlayPauseCommand);
                 break;
             case (Key.Right, ModifierKeys.Control) when !e.IsRepeat:
-            case (Key.MediaNextTrack, ModifierKeys.None) when !e.IsRepeat:
+            case (Key.MediaNextTrack, ModifierKeys.None) when !e.IsRepeat && _mediaSession == null:
                 Run(_vm.NextCommand);
                 break;
             case (Key.Left, ModifierKeys.Control) when !e.IsRepeat:
-            case (Key.MediaPreviousTrack, ModifierKeys.None) when !e.IsRepeat:
+            case (Key.MediaPreviousTrack, ModifierKeys.None) when !e.IsRepeat && _mediaSession == null:
                 Run(_vm.PreviousCommand);
                 break;
             case (Key.Right, ModifierKeys.None):
@@ -418,6 +447,8 @@ internal partial class MainWindow : Window, IDialogService
     private void OnClosing(object? sender, CancelEventArgs e)
     {
         _confirmation?.TrySetResult(false);
+        _mediaSession?.Dispose();
+        _notifier.Clear();
         _vm.Dispose();
     }
 }
