@@ -350,7 +350,7 @@ export const Promo = () => {
 	const volume = (frame: number) =>
 		Math.min(
 			interpolate(frame, [0, 6], [0, 1], {extrapolateRight: 'clamp'}),
-			interpolate(frame, [b(174), TOTAL_FRAMES - 4], [1, 0], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'}),
+			interpolate(frame, [b(165), TOTAL_FRAMES - 4], [1, 0], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'}),
 		);
 	return (
 		<AbsoluteFill style={{background: '#0a0a10'}}>
@@ -394,7 +394,7 @@ export const Promo = () => {
 
 			<Beats from={141} to={149}><OpenSource /></Beats>
 			<Beats from={149} to={159}><Finale /></Beats>
-			<Beats from={159} to={179}><Credits /></Beats>
+			<Beats from={159} to={169}><Credits /></Beats>
 		</AbsoluteFill>
 	);
 };

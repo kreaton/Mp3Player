@@ -4,7 +4,7 @@ Two introductions to the player, made with [Remotion](https://www.remotion.dev/)
 
 | Composition | Format | Length | File |
 |---|---|---|---|
-| `Promo` | Landscape, 3840×2160 | 106 s | `out/mp3player-promo-4k.mp4` |
+| `Promo` | Landscape, 3840×2160 | 100 s | `out/mp3player-promo-4k.mp4` |
 | `PromoShort` | Portrait, 2160×3840, for YouTube Shorts | Under 60 s | `out/mp3player-short-4k.mp4` |
 
 The landscape video is edited to the music: every cut is placed in beats of the song, and the sections follow the song's structure (party on the loud opening, listening on the first breakdown, clean-up and the taskbar buttons on the build back up, the keyboard, the Windows integration and the open-source note on the second breakdown, and the credits on the last loud section). It starts the song 8 beats in, for a quicker opening.

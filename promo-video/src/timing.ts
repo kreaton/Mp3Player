@@ -13,7 +13,7 @@ export const b = (n: number) => Math.round((beat.firstBeat + n * SECONDS_PER_BEA
 export const PROMO_MUSIC_SKIP = Math.round(8 * SECONDS_PER_BEAT * FPS);
 
 /** Length of the video: the credits end with a fade in the song's last loud section. */
-export const TOTAL_FRAMES = b(179);
+export const TOTAL_FRAMES = b(169);
 
 /** Length of the portrait Short: under a minute, so a claim on the music can't get it blocked. */
 export const SHORT_FRAMES = b(100);
