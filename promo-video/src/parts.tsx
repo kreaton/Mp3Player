@@ -2,7 +2,7 @@ import {loadFont} from '@remotion/google-fonts/BricolageGrotesque';
 import {useAudioData, visualizeAudio} from '@remotion/media-utils';
 import {type CSSProperties, type ReactNode, useContext} from 'react';
 import {AbsoluteFill, Img, Internals, interpolate, interpolateColors, random, spring, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
-import {b, beatPulse} from './timing';
+import {b, beatPulse, PROMO_MUSIC_SKIP} from './timing';
 
 export const {fontFamily} = loadFont('normal', {weights: ['400', '600', '800'], subsets: ['latin']});
 
@@ -19,24 +19,32 @@ export const ACCENT = {
 // When the background colour changes, in beats.
 const COLOR_TRACK: [number, string][] = [
 	[0, ACCENT.violet],
+	[10, ACCENT.neon],
+	[12.5, ACCENT.disco],
+	[15, ACCENT.comets],
+	[17.5, ACCENT.velvet],
+	[20, ACCENT.neon],
+	[28, ACCENT.disco],
+	[35, ACCENT.neon],
+	[49, ACCENT.comets],
+	[55, ACCENT.lena],
+	[65, ACCENT.velvet],
+	[75, ACCENT.mopeds],
+	[114, ACCENT.lena],
+	[141, ACCENT.comets],
+	[149, ACCENT.violet],
+];
+
+// The Short has the same party, then the Windows integration, clean-up and the ending sooner.
+const PHONE_COLOR_TRACK: [number, string][] = [
+	[0, ACCENT.violet],
 	[12, ACCENT.neon],
 	[16, ACCENT.disco],
 	[20, ACCENT.comets],
 	[24, ACCENT.velvet],
 	[28, ACCENT.neon],
-	[36, ACCENT.disco],
-	[42, ACCENT.neon],
-	[56, ACCENT.comets],
-	[60, ACCENT.lena],
-	[84, ACCENT.velvet],
-	[92, ACCENT.mopeds],
-	[124, ACCENT.violet],
-];
-
-// The Short has the same party, then reaches clean-up and the ending sooner.
-const PHONE_COLOR_TRACK: [number, string][] = [
-	...COLOR_TRACK.filter(([beat]) => beat <= 60),
-	[74, ACCENT.mopeds],
+	[50, ACCENT.lena],
+	[60, ACCENT.mopeds],
 	[90, ACCENT.violet],
 ];
 
@@ -99,9 +107,10 @@ export const Visualizer = () => {
 	const {fps} = useVideoConfig();
 	const audioData = useAudioData(staticFile('music.mp3'));
 	const accent = useAccent();
+	const skip = useIsPhone() ? 0 : PROMO_MUSIC_SKIP;
 	if (!audioData) return null;
 
-	const spectrum = visualizeAudio({fps, frame, audioData, numberOfSamples: 128});
+	const spectrum = visualizeAudio({fps, frame: frame + skip, audioData, numberOfSamples: 128});
 	// Mirrored around the centre. Higher bins are much quieter, so they get more gain and the whole width moves.
 	const half = spectrum.slice(0, 40).map((v, i) => Math.min(1, Math.pow(v, 0.8) * (1 + i * 0.3)));
 	const bars = [...[...half].reverse(), ...half];

@@ -6,8 +6,14 @@ const SECONDS_PER_BEAT = 60 / beat.bpm;
 /** The frame of a beat of the song; every cut in the video is placed with this. */
 export const b = (n: number) => Math.round((beat.firstBeat + n * SECONDS_PER_BEAT) * FPS);
 
-/** Length of the video: the credits end a little into the song's second breakdown (beat 140). */
-export const TOTAL_FRAMES = b(154);
+/**
+ * The landscape video starts the song 8 beats in, so its opening is quicker but every later scene still sits on the same
+ * part of the song. In the video's own beats the song is loud to 52, quiet to 84, loud to 130, quiet to 161, loud to the end.
+ */
+export const PROMO_MUSIC_SKIP = Math.round(8 * SECONDS_PER_BEAT * FPS);
+
+/** Length of the video: the credits end with a fade in the song's last loud section. */
+export const TOTAL_FRAMES = b(179);
 
 /** Length of the portrait Short: under a minute, so a claim on the music can't get it blocked. */
 export const SHORT_FRAMES = b(100);

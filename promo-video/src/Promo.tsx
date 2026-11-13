@@ -1,7 +1,7 @@
 import type {ReactNode} from 'react';
 import {AbsoluteFill, Html5Audio, Img, interpolate, Sequence, spring, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import {ACCENT, Caption, Confetti, type Focus, fontFamily, Key, Shot, Stage, useAccent, useIsPhone, Visualizer, WHOLE, Words} from './parts';
-import {b, beatPulse, SHORT_FRAMES, TOTAL_FRAMES} from './timing';
+import {b, beatPulse, PROMO_MUSIC_SKIP, SHORT_FRAMES, TOTAL_FRAMES} from './timing';
 import {Glyph, MediaDesk, TaskbarDesk} from './windows';
 
 /** A sequence placed in beats of the song. */
@@ -61,14 +61,15 @@ const ThreeWords = () => {
 
 // ---------------------------------------------------------------- party
 
-const Covers = () => {
+/** Four albums, one after the other; each gets `beats` beats. */
+const Covers = ({beats}: {beats: number}) => {
 	const shots = ['main-neon', 'main-disco', 'main-comets', 'main-velvet'];
-	const from = shots.map((_, i) => b(12 + i * 4) - b(12));
+	const from = shots.map((_, i) => b(12 + i * beats) - b(12));
 	return (
 		<>
 			<Caption kicker="Party night" title="Every album repaints the whole player" sub="Colours and backdrop follow the cover art." subDelay={18} />
 			{shots.map((name, i) => (
-				<Sequence key={name} from={from[i]} durationInFrames={(from[i + 1] ?? b(28) - b(12)) - from[i]}>
+				<Sequence key={name} from={from[i]} durationInFrames={(from[i + 1] ?? b(12 + 4 * beats) - b(12)) - from[i]}>
 					<Shot name={name} from={{x: 0.5, y: 0.5, z: 1}} to={{x: 0.5, y: 0.5, z: 1.03}} enter={i === 0} phone={{from: {x: 0.28, y: 0.47, z: 1.45}, to: {x: 0.28, y: 0.47, z: 1.5}}} />
 				</Sequence>
 			))}
@@ -96,7 +97,7 @@ const SearchScene = () => {
 	// Ctrl+F, then one letter per beat.
 	const typed = Math.max(0, Math.min(7, Math.floor((frame - 2 * beat) / beat) + 1));
 	const name = `search-${typed}`;
-	const enterAt = b(56) - b(42) - beat;
+	const enterAt = 13 * beat;
 	const camera: Focus = {x: 0.5, y: 0.52, z: 1.32};
 	return (
 		<>
@@ -234,6 +235,46 @@ const TaskbarDelete = () => (
 
 // ---------------------------------------------------------------- ending
 
+const REPO = 'github.com/kreaton/Mp3Player';
+
+const OpenSource = () => {
+	const frame = useCurrentFrame();
+	const {fps} = useVideoConfig();
+	const accent = useAccent();
+	const url = spring({frame: frame - 20, fps, config: {damping: 15, stiffness: 140}});
+	return (
+		<AbsoluteFill style={{alignItems: 'center', justifyContent: 'center', fontFamily, textAlign: 'center', paddingBottom: 110}}>
+			<div style={{fontSize: 30, fontWeight: 800, letterSpacing: 6, textTransform: 'uppercase', color: '#d8d8e4', marginBottom: 18}}>
+				<Words text="Free, and open source" step={3} />
+			</div>
+			<div style={{fontSize: 120, fontWeight: 800, color: '#fff', letterSpacing: -3, lineHeight: 1.05}}>
+				<Words text="MIT licensed" delay={6} step={4} />
+			</div>
+			<div
+				style={{
+					marginTop: 54,
+					padding: '22px 46px',
+					borderRadius: 999,
+					background: 'rgba(255,255,255,0.08)',
+					border: `2px solid ${accent}`,
+					boxShadow: `0 0 50px ${accent}`,
+					fontSize: 64,
+					fontWeight: 600,
+					color: '#fff',
+					opacity: Math.min(1, url * 1.4),
+					transform: `translateY(${(1 - url) * 30}px) scale(${0.9 + url * 0.1})`,
+				}}
+			>
+				{REPO}
+			</div>
+			<div style={{fontSize: 36, fontWeight: 400, color: '#d8d8e4', marginTop: 34, opacity: interpolate(frame, [36, 50], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})}}>
+				Download it, read the code, make it yours.
+			</div>
+		</AbsoluteFill>
+	);
+};
+
+
 const Finale = () => {
 	const frame = useCurrentFrame();
 	const {fps} = useVideoConfig();
@@ -291,6 +332,7 @@ const Credits = () => {
 				{CREDIT_ROWS.map(([label, value], i) => (
 					<Credit key={label} label={label} value={value} delay={6 + i * 6} />
 				))}
+				<Credit label="Source code (MIT)" value={REPO} delay={6 + CREDIT_ROWS.length * 6} />
 				<div style={{fontSize: 30, fontWeight: 400, color: '#d8d8e4', marginTop: 8, opacity: interpolate(frame, [40, 60], [0, 1], {extrapolateRight: 'clamp'})}}>
 					© 2026 Per Hejndorf · Version 1.1.2
 					<br />
@@ -306,44 +348,53 @@ const Credits = () => {
 
 export const Promo = () => {
 	const volume = (frame: number) =>
-		interpolate(frame, [b(149), TOTAL_FRAMES - 4], [1, 0], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
+		Math.min(
+			interpolate(frame, [0, 6], [0, 1], {extrapolateRight: 'clamp'}),
+			interpolate(frame, [b(174), TOTAL_FRAMES - 4], [1, 0], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'}),
+		);
 	return (
 		<AbsoluteFill style={{background: '#0a0a10'}}>
-			<Html5Audio src={staticFile('music.mp3')} volume={volume} />
+			<Html5Audio src={staticFile('music.mp3')} trimBefore={PROMO_MUSIC_SKIP} volume={volume} />
 			<Stage />
-			<Beats from={0} to={12}>
+			<Beats from={0} to={10}>
 				<Confetti count={30} clearCaption={false} />
 			</Beats>
-			<Beats from={12} to={60}>
+			<Beats from={10} to={52}>
 				<Confetti />
 			</Beats>
-			<Beats from={92} to={132}>
+			<Beats from={84} to={114}>
+				<Confetti count={18} />
+			</Beats>
+			<Beats from={159} to={170}>
 				<Confetti count={18} />
 			</Beats>
 			<Visualizer />
 
-			<Beats from={0} to={4}><Logo /></Beats>
-			<Beats from={4} to={8}><Grooviest /></Beats>
-			<Beats from={8} to={12}><ThreeWords /></Beats>
+			<Beats from={0} to={3}><Logo /></Beats>
+			<Beats from={3} to={6}><Grooviest /></Beats>
+			<Beats from={6} to={10}><ThreeWords /></Beats>
+			<Beats from={10} to={20}><Covers beats={2.5} /></Beats>
 
-			<Beats from={12} to={28}><Covers /></Beats>
-			<Beats from={28} to={36}><Crossfade /></Beats>
-			<Beats from={36} to={42}><ShuffleScene /></Beats>
-			<Beats from={42} to={56}><SearchScene /></Beats>
-			<Beats from={56} to={60}><Requested /></Beats>
+			{/* In the video's beats the song is loud to 52, quiet to 84, loud to 130, quiet to 161, loud to the end. */}
+			<Beats from={20} to={28}><Crossfade /></Beats>
+			<Beats from={28} to={35}><ShuffleScene /></Beats>
+			<Beats from={35} to={49}><SearchScene /></Beats>
+			<Beats from={49} to={55}><Requested /></Beats>
 
-			<Beats from={60} to={68}><Listen /></Beats>
-			<Beats from={68} to={76}><Keyboard /></Beats>
-			<Beats from={76} to={84}><WindowsMedia /></Beats>
-			<Beats from={84} to={92}><Library /></Beats>
+			<Beats from={55} to={65}><Listen /></Beats>
+			<Beats from={65} to={75}><Library /></Beats>
 
-			<Beats from={92} to={100}><CleanUp /></Beats>
-			<Beats from={100} to={108}><DeleteTrack /></Beats>
-			<Beats from={108} to={116}><DeleteFolder /></Beats>
-			<Beats from={116} to={124}><TaskbarDelete /></Beats>
+			<Beats from={75} to={82}><CleanUp /></Beats>
+			<Beats from={82} to={92}><DeleteTrack /></Beats>
+			<Beats from={92} to={102}><DeleteFolder /></Beats>
+			<Beats from={102} to={114}><TaskbarDelete /></Beats>
 
-			<Beats from={124} to={132}><Finale /></Beats>
-			<Beats from={132} to={154}><Credits /></Beats>
+			<Beats from={114} to={127}><Keyboard /></Beats>
+			<Beats from={127} to={141}><WindowsMedia /></Beats>
+
+			<Beats from={141} to={149}><OpenSource /></Beats>
+			<Beats from={149} to={159}><Finale /></Beats>
+			<Beats from={159} to={179}><Credits /></Beats>
 		</AbsoluteFill>
 	);
 };
@@ -405,6 +456,7 @@ const PhoneEnding = () => {
 				{CREDIT_ROWS.map(([label, value], i) => (
 					<Credit key={label} label={label} value={value} delay={10 + i * 3} />
 				))}
+				<Credit label="Open source, MIT licence" value={REPO} delay={10 + CREDIT_ROWS.length * 3} />
 				<div style={{fontSize: 32, fontWeight: 400, lineHeight: 1.35, color: '#d8d8e4', marginTop: 12, opacity: interpolate(frame, [24, 36], [0, 1], {extrapolateRight: 'clamp'})}}>
 					© 2026 Per Hejndorf · Version 1.1.2
 					<br />
@@ -429,7 +481,7 @@ export const PromoShort = () => {
 			<Beats from={12} to={60}>
 				<Confetti />
 			</Beats>
-			<Beats from={74} to={90}>
+			<Beats from={60} to={90}>
 				<Confetti count={18} />
 			</Beats>
 			<Visualizer />
@@ -437,20 +489,17 @@ export const PromoShort = () => {
 			<Beats from={0} to={6}><PhoneHook /></Beats>
 			<Beats from={6} to={12}><PhoneThreeWords /></Beats>
 
-			<Beats from={12} to={28}><Covers /></Beats>
+			<Beats from={12} to={28}><Covers beats={4} /></Beats>
 			<Beats from={28} to={36}><Crossfade /></Beats>
-			<Beats from={36} to={42}><ShuffleScene /></Beats>
-			<Beats from={42} to={56}><SearchScene /></Beats>
-			<Beats from={56} to={60}><Requested /></Beats>
+			<Beats from={36} to={50}><SearchScene /></Beats>
 
-			{/* No room for the keyboard shortcuts in a Short: the Windows integration takes their place. */}
-			<Beats from={60} to={65}><Listen /></Beats>
-			<Beats from={65} to={70}><WindowsMedia /></Beats>
-			<Beats from={70} to={74}><TaskbarDelete /></Beats>
-
-			<Beats from={74} to={79}><CleanUp /></Beats>
-			<Beats from={79} to={85}><DeleteTrack /></Beats>
-			<Beats from={85} to={90}><DeleteFolder /></Beats>
+			{/* A Short has to stay under a minute, so shuffle, the quiet listen and the keyboard shortcuts are left out
+			    to give the scenes that are left time to be read. */}
+			<Beats from={50} to={60}><WindowsMedia /></Beats>
+			<Beats from={60} to={67}><CleanUp /></Beats>
+			<Beats from={67} to={75}><DeleteTrack /></Beats>
+			<Beats from={75} to={82}><DeleteFolder /></Beats>
+			<Beats from={82} to={90}><TaskbarDelete /></Beats>
 
 			<Sequence from={b(90)} durationInFrames={SHORT_FRAMES - b(90)}><PhoneEnding /></Sequence>
 		</AbsoluteFill>
